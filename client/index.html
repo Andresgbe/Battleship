@@ -8,7 +8,21 @@
 </head>
 <body>
     <h1>¡Bienvenido a Batalla Naval!</h1>
-    <div class="board" id="player-board"></div>
-    <script src="scripts/script.js" defer></script>
+    
+    <h2 id="turn-info">Esperando jugadores...</h2>
+
+    <div class="game-container">
+        <div>
+            <h3>Tu Tablero</h3>
+            <div class="board" id="player-board"></div>
+        </div>
+
+        <div>
+            <h3>Tablero del Oponente</h3>
+            <div class="board" id="enemy-board"></div>
+        </div>
+    </div>
+
+    <script src="scripts/script.js"></script>
 </body>
 </html>

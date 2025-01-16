@@ -1,85 +1,116 @@
-const WebSocket = require('ws'); // Esto inicializa el módulo WebSocket para Node.js
+const WebSocket = require('ws');
 
 const PORT = 8080;
 const server = new WebSocket.Server({ port: PORT });
 
 console.log(`Servidor WebSocket escuchando en el puerto ${PORT}`);
 
-// Almacenar el estado de los jugadores
 const players = {};
+let currentTurn = null;
 
 // Crear tablero vacío
 const createEmptyBoard = () => {
-    const board = [];
-    for (let i = 0; i < 10; i++) {
-        const row = Array(10).fill(0); // 0 = agua, 1 = barco
-        board.push(row);
+    return Array.from({ length: 10 }, () => Array(10).fill(0));
+};
+
+// Colocar barcos en el tablero (aleatorio por ahora)
+const placeShips = (board) => {
+    let shipsPlaced = 5;
+    while (shipsPlaced > 0) {
+        let row = Math.floor(Math.random() * 10);
+        let col = Math.floor(Math.random() * 10);
+        if (board[row][col] === 0) {
+            board[row][col] = 1; // 1 representa un barco
+            shipsPlaced--;
+        }
     }
-    return board;
 };
 
-// Inicializar un jugador con un tablero y barcos
-const initializePlayer = (playerId) => {
+// Inicializar jugador
+const initializePlayer = (playerId, socket) => {
     players[playerId] = {
+        socket,
         board: createEmptyBoard(),
-        ships: 5, // Número de barcos restantes
+        ships: 5
     };
+    placeShips(players[playerId].board);
 
-    // Colocar barcos manualmente por ahora
-    const board = players[playerId].board;
-    board[0][0] = 1; // Barco en (0, 0)
-    board[1][1] = 1; // Barco en (1, 1)
-    board[2][2] = 1; // Barco en (2, 2)
-    board[3][3] = 1; // Barco en (3, 3)
-    board[4][4] = 1; // Barco en (4, 4)
+    // Establecer turno inicial si es el primer jugador
+    if (!currentTurn) {
+        currentTurn = playerId;
+    }
 };
 
-// Procesar disparo en el tablero de un jugador
-const processShot = (playerId, row, col) => {
-    const player = players[playerId];
-    const board = player.board;
+// Procesar disparo
+const processShot = (shooterId, targetId, row, col) => {
+    const board = players[targetId].board;
 
     if (board[row][col] === 1) {
-        board[row][col] = -1; // Impacto en un barco
-        player.ships -= 1;
-        return {
-            row,
-            col,
-            result: player.ships === 0 ? 'sunk' : 'hit',
-        };
+        board[row][col] = -1;
+        players[targetId].ships--;
+        return { row, col, result: players[targetId].ships === 0 ? 'sunk' : 'hit' };
     } else if (board[row][col] === 0) {
-        board[row][col] = -2; // Agua
+        board[row][col] = -2;
         return { row, col, result: 'miss' };
     } else {
         return { row, col, result: 'already_shot' };
     }
 };
 
-// Manejar conexiones WebSocket
-server.on('connection', (socket) => {
-    console.log('Nuevo cliente conectado');
+// Cambiar turno
+const switchTurn = () => {
+    const playerIds = Object.keys(players);
+    if (playerIds.length === 2) {
+        currentTurn = playerIds.find(id => id !== currentTurn);
+        playerIds.forEach(id => players[id].socket.send(JSON.stringify({ type: 'turn', playerId: currentTurn })));
+    }
+};
 
+// Manejo de conexiones
+server.on('connection', (socket) => {
     const playerId = `player-${Date.now()}`;
-    initializePlayer(playerId);
+    initializePlayer(playerId, socket);
+    socket.send(JSON.stringify({ type: 'welcome', playerId }));
+
+    // Enviar turno inicial si hay dos jugadores
+    if (Object.keys(players).length === 2) {
+        switchTurn();
+    }
 
     socket.on('message', (message) => {
         try {
-            console.log('Mensaje recibido del cliente:', message);
             const data = JSON.parse(message);
+            if (data.type === 'shoot' && data.playerId === currentTurn) {
+                const opponentId = Object.keys(players).find(id => id !== data.playerId);
+                if (!opponentId) return;
 
-            if (data.type === 'shoot') {
-                const result = processShot(playerId, data.row, data.col);
-                console.log('Resultado del disparo:', result);
-                socket.send(JSON.stringify({ type: 'shoot_response', ...result }));
+                const result = processShot(data.playerId, opponentId, data.row, data.col);
+                players[data.playerId].socket.send(JSON.stringify({ type: 'shoot_response', ...result }));
+                players[opponentId].socket.send(JSON.stringify({ type: 'opponent_shot', ...result }));
+
+                // Verificar si el juego terminó
+                if (players[opponentId].ships === 0) {
+                    players[data.playerId].socket.send(JSON.stringify({ type: 'game_over', winner: data.playerId }));
+                    players[opponentId].socket.send(JSON.stringify({ type: 'game_over', winner: data.playerId }));
+                } else {
+                    switchTurn();
+                }
             }
         } catch (error) {
-            console.error('Error procesando el mensaje:', error.message);
-            socket.send(JSON.stringify({ type: 'error', message: 'Formato de mensaje no válido' }));
+            console.error("Error procesando el mensaje:", error);
         }
     });
 
+    // Manejar desconexión
     socket.on('close', () => {
-        console.log('Cliente desconectado');
+        console.log(`Jugador ${playerId} desconectado`);
         delete players[playerId];
+
+        // Resetear turno si solo queda un jugador
+        if (Object.keys(players).length === 1) {
+            currentTurn = Object.keys(players)[0];
+        } else if (Object.keys(players).length === 0) {
+            currentTurn = null;
+        }
     });
 });

@@ -1,4 +1,6 @@
 const socket = new WebSocket('ws://localhost:8080');
+let playerId = null;
+let myTurn = false;
 
 // Evento al abrir la conexión
 socket.addEventListener('open', () => {
@@ -7,77 +9,82 @@ socket.addEventListener('open', () => {
 
 // Evento al recibir mensajes del servidor
 socket.addEventListener('message', (event) => {
-    console.log('Mensaje recibido del servidor (crudo):', event.data);
+    console.log('Mensaje recibido del servidor:', event.data);
 
     try {
         const data = JSON.parse(event.data);
-        console.log('Mensaje recibido del servidor (JSON):', data);
 
-        if (data.type === 'shoot_response') {
-            const cell = document.querySelector(
-                `.position[data-row="${data.row}"][data-col="${data.col}"]`
+        if (data.type === 'welcome') {
+            playerId = data.playerId;
+            console.log(`Tu ID de jugador es: ${playerId}`);
+        } else if (data.type === 'turn') {
+            myTurn = data.playerId === playerId;
+            document.getElementById('turn-info').textContent = myTurn ? "Tu turno" : "Turno del oponente";
+        } else if (data.type === 'shoot_response') {
+            // Mostrar los disparos que hice en el tablero enemigo
+            const enemyCell = document.querySelector(
+                `#enemy-board .position[data-row="${data.row}"][data-col="${data.col}"]`
             );
-
-            if (!cell) {
-                console.warn(`No se encontró la celda en (${data.row}, ${data.col})`);
-                return;
-            }
-
             if (data.result === 'hit') {
-                cell.style.backgroundColor = 'red';
+                enemyCell.style.backgroundColor = 'red';
             } else if (data.result === 'miss') {
-                cell.style.backgroundColor = 'gray';
+                enemyCell.style.backgroundColor = 'gray';
             } else if (data.result === 'sunk') {
-                cell.style.backgroundColor = 'darkred';
+                enemyCell.style.backgroundColor = 'darkred';
             }
-
-            console.log(`Disparo en (${data.row}, ${data.col}): ${data.result}`);
-        } else if (data.type === 'error') {
-            console.error(`Error recibido del servidor: ${data.message}`);
+        } else if (data.type === 'opponent_shot') {
+            // Mostrar los disparos recibidos en mi tablero
+            const playerCell = document.querySelector(
+                `#player-board .position[data-row="${data.row}"][data-col="${data.col}"]`
+            );
+            if (data.result === 'hit') {
+                playerCell.style.backgroundColor = 'red';
+            } else if (data.result === 'miss') {
+                playerCell.style.backgroundColor = 'gray';
+            } else if (data.result === 'sunk') {
+                playerCell.style.backgroundColor = 'darkred';
+            }
+        } else if (data.type === 'game_over') {
+            alert(data.winner === playerId ? "¡Ganaste!" : "Perdiste");
         }
     } catch (error) {
         console.error('Error procesando el mensaje del servidor:', error.message);
     }
 });
 
-// Evento al cerrar la conexión
-socket.addEventListener('close', () => {
-    console.log('Conexión cerrada');
-});
-
-// Evento al ocurrir un error
-socket.addEventListener('error', (error) => {
-    console.error('Error en el WebSocket:', error);
-});
-
-// Lógica para generar el tablero y manejar los disparos
+// Generar los tableros
 document.addEventListener('DOMContentLoaded', () => {
-    const board = document.getElementById('player-board');
+    const playerBoard = document.getElementById('player-board');
+    const enemyBoard = document.getElementById('enemy-board');
 
     for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
-            const cell = document.createElement('div');
-            cell.className = 'position';
-            cell.dataset.row = i;
-            cell.dataset.col = j;
-            board.appendChild(cell);
+            // Crear tablero del jugador
+            const playerCell = document.createElement('div');
+            playerCell.className = 'position';
+            playerCell.dataset.row = i;
+            playerCell.dataset.col = j;
+            playerBoard.appendChild(playerCell);
+
+            // Crear tablero del enemigo
+            const enemyCell = document.createElement('div');
+            enemyCell.className = 'position';
+            enemyCell.dataset.row = i;
+            enemyCell.dataset.col = j;
+            enemyBoard.appendChild(enemyCell);
         }
     }
 
-    const cells = document.querySelectorAll('.position');
-    cells.forEach(cell => {
+    document.querySelectorAll('#enemy-board .position').forEach(cell => {
         cell.addEventListener('click', () => {
-            if (cell.classList.contains('clicked')) {
-                console.log('Ya disparaste en esta posición.');
+            if (!myTurn) {
+                console.log("No es tu turno.");
                 return;
             }
-
-            cell.classList.add('clicked');
             const row = parseInt(cell.dataset.row);
             const col = parseInt(cell.dataset.col);
-
-            console.log(`Disparo en la posición: (${row}, ${col})`);
-            socket.send(JSON.stringify({ type: 'shoot', row, col }));
+            socket.send(JSON.stringify({ type: 'shoot', playerId, row, col }));
+            myTurn = false; // Esperar la respuesta del servidor
         });
     });
 });
