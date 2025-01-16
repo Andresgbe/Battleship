@@ -12,7 +12,7 @@
     grid-template-columns: repeat(10, 40px);
     grid-template-rows: repeat(10, 40px);
     gap: 0;
-    margin: 10px auto; /* Esto centra la tabla horizontalmente */
+    margin: 10px auto;
     background-color: lightblue;
     border: 2px solid black;
 }
@@ -28,7 +28,7 @@
 }
 
 .position.ship {
-    background-image: url("../img/barco.png"); /* Asegúrate de tener una imagen */
+    background-image: url("../img/barco.png");
     background-size: cover;
 }
 

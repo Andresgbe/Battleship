@@ -4,6 +4,7 @@ let myTurn = false;
 let board = Array(10).fill(null).map(() => Array(10).fill(0));
 let selectedShipSize = 5;
 let selectedOrientation = 'H';
+let placedShips = new Set(); 
 
 socket.addEventListener('open', () => {
     console.log('Conectado al servidor WebSocket');
@@ -11,13 +12,13 @@ socket.addEventListener('open', () => {
 
 socket.addEventListener('message', (event) => {
     const data = JSON.parse(event.data);
-    console.log('Mensaje recibido del servidor:', data);
+    console.log('Mensaje recibidoo:', data);
 
     if (data.type === 'welcome') {
         playerId = data.playerId;
         console.log(`Tu ID de jugador es: ${playerId}`);
     } else if (data.type === 'game_start') {
-        document.getElementById('turn-info').textContent = "¡El juego ha comenzado!";
+        document.getElementById('turn-info').textContent = "Comenzó!!!";
     } else if (data.type === 'turn') {
         myTurn = data.playerId === playerId;
         document.getElementById('turn-info').textContent = myTurn ? "Tu turno" : "Turno del oponente";
@@ -34,6 +35,10 @@ document.getElementById('confirm-setup').addEventListener('click', () => {
 
 document.getElementById('ship-select').addEventListener('change', (event) => {
     selectedShipSize = parseInt(event.target.value);
+    if (placedShips.has(selectedShipSize)) {
+        alert("Este tipo de barco ya ha sido colocado.");
+        return;
+    }
 });
 
 document.getElementById('orientation').addEventListener('change', (event) => {
@@ -64,6 +69,11 @@ function createBoard(boardId, isEnemy = false) {
 }
 
 function placeShip(event) {
+    if (placedShips.has(selectedShipSize)) {
+        alert("Ya colocaste este barco, gay");
+        return;
+    }
+
     const row = parseInt(event.target.dataset.row);
     const col = parseInt(event.target.dataset.col);
 
@@ -75,6 +85,7 @@ function placeShip(event) {
                 board[row + i][col] = 1;
             }
         }
+        placedShips.add(selectedShipSize); 
         renderBoard();
     } else {
         console.log('No se puede colocar el barco aquí');
@@ -93,16 +104,18 @@ function canPlaceShip(row, col) {
 }
 
 function renderBoard() {
+    const playerBoard = document.getElementById('player-board');
+    playerBoard.innerHTML = '';
+    createBoard('player-board', false);
     for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
-            const cell = document.querySelector(`#player-board .position[data-row='${i}'][data-col='${j}']`);
             if (board[i][j] === 1) {
+                const cell = document.querySelector(`#player-board .position[data-row='${i}'][data-col='${j}']`);
                 cell.style.backgroundColor = 'blue';
             }
         }
     }
 }
-
 
 function handleShot(event) {
     if (!myTurn) {
@@ -125,3 +138,4 @@ function updateBoard(boardId, row, col, result) {
         cell.style.backgroundColor = 'darkred';
     }
 }
+
