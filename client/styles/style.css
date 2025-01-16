@@ -1,0 +1,26 @@
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    grid-template-rows: repeat(10, 40px);
+    gap: 2px;
+    margin: 20px auto;
+    width: fit-content;
+    background-color: lightblue;
+    border: 2px solid #000;
+}
+
+.position {
+    width: 40px;
+    height: 40px;
+    background-color: #046c69;
+    border: 1px solid #000;
+    text-align: center;
+    vertical-align: middle;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.position:hover {
+    background-color: #048b9a;
+}
