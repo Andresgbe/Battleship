@@ -1,25 +1,57 @@
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+}
+
 .board {
     display: grid;
     grid-template-columns: repeat(10, 40px);
     grid-template-rows: repeat(10, 40px);
-    gap: 0; /* Elimina cualquier espacio entre celdas */
-    margin: 20px auto;
-    width: fit-content;
+    gap: 0;
+    margin: 10px auto; /* Esto centra la tabla horizontalmente */
     background-color: lightblue;
-    border: 2px solid black; /* Borde alrededor del tablero */
+    border: 2px solid black;
 }
-
 .position {
     width: 40px;
     height: 40px;
-    background-color: #046c69; /* Color inicial */
-    border: 2px solid black; /* Hace que se noten las celdas */
+    background-color: #046c69;
+    border: 1px solid black;
     text-align: center;
     color: white;
     font-weight: bold;
     cursor: pointer;
 }
 
-.position:hover {
-    background-color: #048b9a;
+.position.ship {
+    background-image: url("../img/barco.png"); /* Asegúrate de tener una imagen */
+    background-size: cover;
+}
+
+.orientation {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.orientation.active {
+    background-color: red;
+    color: white;
+}
+
+.ship-button {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.ship-button.selected {
+    background-color: green;
+    color: white;
 }

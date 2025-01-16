@@ -2,6 +2,8 @@ const socket = new WebSocket('ws://localhost:8080');
 let playerId = null;
 let myTurn = false;
 let board = Array(10).fill(null).map(() => Array(10).fill(0));
+let selectedShipSize = 5;
+let selectedOrientation = 'H';
 
 socket.addEventListener('open', () => {
     console.log('Conectado al servidor WebSocket');
@@ -30,8 +32,16 @@ document.getElementById('confirm-setup').addEventListener('click', () => {
     socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
 });
 
+document.getElementById('ship-select').addEventListener('change', (event) => {
+    selectedShipSize = parseInt(event.target.value);
+});
+
+document.getElementById('orientation').addEventListener('change', (event) => {
+    selectedOrientation = event.target.value;
+});
+
 document.addEventListener('DOMContentLoaded', () => {
-    createBoard('player-board');
+    createBoard('player-board', false);
     createBoard('enemy-board', true);
 });
 
@@ -43,13 +53,56 @@ function createBoard(boardId, isEnemy = false) {
             cell.className = 'position';
             cell.dataset.row = i;
             cell.dataset.col = j;
-            if (isEnemy) {
+            if (!isEnemy) {
+                cell.addEventListener('click', placeShip);
+            } else {
                 cell.addEventListener('click', handleShot);
             }
             boardElement.appendChild(cell);
         }
     }
 }
+
+function placeShip(event) {
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
+
+    if (canPlaceShip(row, col)) {
+        for (let i = 0; i < selectedShipSize; i++) {
+            if (selectedOrientation === 'H') {
+                board[row][col + i] = 1;
+            } else {
+                board[row + i][col] = 1;
+            }
+        }
+        renderBoard();
+    } else {
+        console.log('No se puede colocar el barco aquí');
+    }
+}
+
+function canPlaceShip(row, col) {
+    for (let i = 0; i < selectedShipSize; i++) {
+        if (selectedOrientation === 'H') {
+            if (col + i >= 10 || board[row][col + i] !== 0) return false;
+        } else {
+            if (row + i >= 10 || board[row + i][col] !== 0) return false;
+        }
+    }
+    return true;
+}
+
+function renderBoard() {
+    for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 10; j++) {
+            const cell = document.querySelector(`#player-board .position[data-row='${i}'][data-col='${j}']`);
+            if (board[i][j] === 1) {
+                cell.style.backgroundColor = 'blue';
+            }
+        }
+    }
+}
+
 
 function handleShot(event) {
     if (!myTurn) {
