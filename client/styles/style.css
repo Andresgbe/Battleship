@@ -2,20 +2,19 @@
     display: grid;
     grid-template-columns: repeat(10, 40px);
     grid-template-rows: repeat(10, 40px);
-    gap: 2px;
+    gap: 0; /* Elimina cualquier espacio entre celdas */
     margin: 20px auto;
     width: fit-content;
     background-color: lightblue;
-    border: 2px solid #000;
+    border: 2px solid black; /* Borde alrededor del tablero */
 }
 
 .position {
-    width: 40px;
+    width: 40px; /* Tamaño de las celdas */
     height: 40px;
-    background-color: #046c69;
-    border: 1px solid #000;
+    background-color: #046c69; /* Color inicial de las celdas */
+    border: 1px solid black; /* Asegura que las líneas de las celdas sean visibles */
     text-align: center;
-    vertical-align: middle;
     color: white;
     font-weight: bold;
     cursor: pointer;

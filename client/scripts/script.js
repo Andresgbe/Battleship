@@ -18,32 +18,28 @@ socket.addEventListener('error', (error) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Script cargado correctamente");
-
     const board = document.getElementById('player-board');
 
+    // Generar las celdas del tablero
     for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
-            const position = document.createElement('div');
-            position.className = 'position';
-            position.dataset.row = i;
-            position.dataset.col = j;
-            board.appendChild(position);
+            const cell = document.createElement('div');
+            cell.className = 'position';
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+            board.appendChild(cell);
         }
     }
-});
 
-// Escuchar clics en cada celda del tablero
-const cells = document.querySelectorAll('.position');
-
-cells.forEach(cell => {
-    cell.addEventListener('click', () => {
-        const row = cell.dataset.row;
-        const col = cell.dataset.col;
-        console.log(`Disparo en la posición: (${row}, ${col})`);
-
-        // Cambiar el color de la celda al hacer clic
-        cell.style.backgroundColor = 'blue';
+    // Escuchar clics en cada celda
+    const cells = document.querySelectorAll('.position');
+    cells.forEach(cell => {
+        cell.addEventListener('click', () => {
+            const row = cell.dataset.row;
+            const col = cell.dataset.col;
+            console.log(`Disparo en la posición: (${row}, ${col})`);
+            cell.style.backgroundColor = 'red'; // Cambia según el estado del disparo
+        });
     });
 });
 
