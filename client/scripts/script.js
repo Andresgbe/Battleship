@@ -6,6 +6,8 @@ let selectedShip = { name: "Portaaviones", size: 5 };
 let selectedOrientation = 'H';
 let placedShips = new Set(); // Mantiene un registro de los barcos colocados por nombre
 let shotsFired = new Set(); // Registra los disparos realizados para evitar repetir
+let playerPoints = 0; // Declarar la variable de los puntos aquí, al inicio
+
 
 const shipTypes = [
     { name: "Portaaviones", size: 5 },
@@ -15,6 +17,15 @@ const shipTypes = [
     { name: "Destructor", size: 2 }
 ];
 
+function useSonar() {
+    if (myTurn && playerPoints >= 5) {
+        // Enviar al servidor para activar el sonar
+        socket.send(JSON.stringify({ type: 'use_sonar', playerId: playerId }));
+    } else {
+        alert("No tienes suficientes puntos o no es tu turno.");
+    }
+}
+
 socket.addEventListener('open', () => {
     console.log('Conectado al servidor WebSocket');
 });
@@ -22,7 +33,7 @@ socket.addEventListener('open', () => {
 socket.addEventListener('message', (event) => {
     const data = JSON.parse(event.data);
     console.log('Mensaje recibido del servidor:', data);
-
+    
     // Manejo de la bienvenida
     if (data.type === 'welcome') {
         playerId = data.playerId;
@@ -54,7 +65,17 @@ socket.addEventListener('message', (event) => {
     else if (data.type === 'update_points') {
         // Actualizamos el puntaje mostrado en la interfaz
         document.getElementById('player-points').textContent = `Puntos: ${data.points}`;
+        playerPoints = data.points; // Actualizar la variable de puntos
     }
+    // Manejo del resultado del sonar
+    if (data.type === 'sonar_result') {
+        alert(`Sonar revela: Barco enemigo en [${data.row}, ${data.col}]`);
+        // Aquí puedes agregar lógica para resaltar o marcar la casilla en el tablero del oponente
+        const cell = document.querySelector(`#enemy-board .position[data-row='${data.row}'][data-col='${data.col}']`);
+        if (cell) {
+            cell.style.backgroundColor = 'yellow';  // Resaltar la casilla revelada
+            }
+        }
 });
 
 

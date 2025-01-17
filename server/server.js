@@ -1,4 +1,6 @@
 const WebSocket = require('ws');
+const { handleSonarUse } = require('./powerups');
+
 
 const PORT = 8080;
 const server = new WebSocket.Server({ port: PORT });
@@ -108,8 +110,6 @@ const checkIfOpponentSunkAllShips = (targetId) => {
     return true; // Todos los barcos del oponente han sido tocados
 };
 
-
-
 server.on('connection', (socket) => {
     const playerId = `player-${Date.now()}`;
     initializePlayer(playerId, socket);
@@ -119,6 +119,7 @@ server.on('connection', (socket) => {
         try {
             const data = JSON.parse(message);
 
+            // Manejo de la configuración inicial de los jugadores
             if (data.type === 'setup_complete') {
                 players[data.playerId].board = data.board;
                 players[data.playerId].ready = true;
@@ -131,6 +132,7 @@ server.on('connection', (socket) => {
                 }
             }
 
+            // Manejo de los disparos
             if (data.type === 'shoot' && data.playerId === currentTurn) {
                 const opponentId = Object.keys(players).find(id => id !== data.playerId);
                 if (!opponentId) return;
@@ -149,6 +151,12 @@ server.on('connection', (socket) => {
                     switchTurn();
                 }
             }
+
+            // Manejo de la solicitud de uso de sonar
+            if (data.type === 'use_sonar' && data.playerId === currentTurn) {
+                handleSonarUse(data.playerId, players);  // Llamar a la función de sonar
+            }
+
         } catch (error) {
             console.error("Error procesando el mensaje:", error);
         }
