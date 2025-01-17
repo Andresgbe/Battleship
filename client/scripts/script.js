@@ -109,20 +109,28 @@ function placeShip(event) {
     const col = parseInt(event.target.dataset.col);
 
     if (canPlaceShip(row, col)) {
+        let shipCoordinates = [];
+
         for (let i = 0; i < selectedShip.size; i++) {
             if (selectedOrientation === 'H') {
-                board[row][col + i] = 1;
+                board[row][col + i] = selectedShip.name;  // Guardamos el nombre del barco en cada celda
+                shipCoordinates.push({ row: row, col: col + i });
             } else {
-                board[row + i][col] = 1;
+                board[row + i][col] = selectedShip.name;
+                shipCoordinates.push({ row: row + i, col: col });
             }
         }
+
         placedShips.add(selectedShip.name);
-        checkShipsPlacement(); // 🔹 Verificar si se deben habilitar los botones después de colocar un barco
+        shipsData[selectedShip.name] = { size: selectedShip.size, hits: 0, coordinates: shipCoordinates }; // Registrar el barco con sus coordenadas
+
+        checkShipsPlacement();  // Verificar si se deben habilitar los botones después de colocar un barco
         renderBoard();
     } else {
         console.log('No se puede colocar el barco aquí');
     }
 }
+
 
 function canPlaceShip(row, col) {
     for (let i = 0; i < selectedShip.size; i++) {
@@ -150,22 +158,40 @@ function renderBoard() {
 }
 
 function handleShot(event) {
-    if (!myTurn) {
-        console.log("No es tu turno.");
-        return;
-    }
-    const row = parseInt(event.target.dataset.row);
-    const col = parseInt(event.target.dataset.col);
-    const shotKey = `${row},${col}`;
+    function handleShot(event) {
+        if (!myTurn) {
+            console.log("No es tu turno.");
+            return;
+        }
+        const row = parseInt(event.target.dataset.row);
+        const col = parseInt(event.target.dataset.col);
+        const shotKey = `${row},${col}`;
     
-    if (shotsFired.has(shotKey)) {
-        console.log("Ya has disparado en esta casilla.");
-        return;
-    }
+        if (shotsFired.has(shotKey)) {
+            console.log("Ya has disparado en esta casilla.");
+            return;
+        }
     
-    shotsFired.add(shotKey);
-    socket.send(JSON.stringify({ type: 'shoot', playerId, row, col }));
+        shotsFired.add(shotKey);
+    
+        let hitShip = board[row][col];
+        let result = "miss";
+    
+        if (hitShip && hitShip !== 0) {
+            shipsData[hitShip].hits++;
+    
+            if (shipsData[hitShip].hits === shipsData[hitShip].size) {
+                result = "sunk";
+                console.log(`¡Has hundido el ${hitShip}!`);
+            } else {
+                result = "hit";
+            }
+        }
+    
+        socket.send(JSON.stringify({ type: "shoot", playerId, row, col, result }));
+    }
 }
+    
 
 function updateBoard(boardId, row, col, result) {
     const cell = document.querySelector(`#${boardId} .position[data-row='${row}'][data-col='${col}']`);
