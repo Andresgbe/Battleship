@@ -38,22 +38,7 @@ socket.addEventListener('message', (event) => {
     }
 });
 
-// 🔹 MODIFICACIÓN: Deshabilitar el botón hasta que los 5 barcos sean colocados
-document.getElementById('confirm-setup').disabled = true;
-
-function checkShipsPlacement() {
-    if (placedShips.size === 5) {
-        document.getElementById('confirm-setup').disabled = false; // Habilitar el botón
-    } else {
-        document.getElementById('confirm-setup').disabled = true; // Mantener deshabilitado si faltan barcos
-    }
-}
-
 document.getElementById('confirm-setup').addEventListener('click', () => {
-    if (placedShips.size < 5) {
-        alert("Debes colocar todos los barcos antes de confirmar.");
-        return;
-    }
     socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
 });
 
@@ -109,28 +94,19 @@ function placeShip(event) {
     const col = parseInt(event.target.dataset.col);
 
     if (canPlaceShip(row, col)) {
-        let shipCoordinates = [];
-
         for (let i = 0; i < selectedShip.size; i++) {
             if (selectedOrientation === 'H') {
-                board[row][col + i] = selectedShip.name;  // Guardamos el nombre del barco en cada celda
-                shipCoordinates.push({ row: row, col: col + i });
+                board[row][col + i] = 1;
             } else {
-                board[row + i][col] = selectedShip.name;
-                shipCoordinates.push({ row: row + i, col: col });
+                board[row + i][col] = 1;
             }
         }
-
         placedShips.add(selectedShip.name);
-        shipsData[selectedShip.name] = { size: selectedShip.size, hits: 0, coordinates: shipCoordinates }; // Registrar el barco con sus coordenadas
-
-        checkShipsPlacement();  // Verificar si se deben habilitar los botones después de colocar un barco
         renderBoard();
     } else {
         console.log('No se puede colocar el barco aquí');
     }
 }
-
 
 function canPlaceShip(row, col) {
     for (let i = 0; i < selectedShip.size; i++) {
@@ -158,49 +134,30 @@ function renderBoard() {
 }
 
 function handleShot(event) {
-    function handleShot(event) {
-        if (!myTurn) {
-            console.log("No es tu turno.");
-            return;
-        }
-        const row = parseInt(event.target.dataset.row);
-        const col = parseInt(event.target.dataset.col);
-        const shotKey = `${row},${col}`;
-    
-        if (shotsFired.has(shotKey)) {
-            console.log("Ya has disparado en esta casilla.");
-            return;
-        }
-    
-        shotsFired.add(shotKey);
-    
-        let hitShip = board[row][col];
-        let result = "miss";
-    
-        if (hitShip && hitShip !== 0) {
-            shipsData[hitShip].hits++;
-    
-            if (shipsData[hitShip].hits === shipsData[hitShip].size) {
-                result = "sunk";
-                console.log(`¡Has hundido el ${hitShip}!`);
-            } else {
-                result = "hit";
-            }
-        }
-    
-        socket.send(JSON.stringify({ type: "shoot", playerId, row, col, result }));
+    if (!myTurn) {
+        console.log("No es tu turno.");
+        return;
     }
-}
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
+    const shotKey = `${row},${col}`;
     
+    if (shotsFired.has(shotKey)) {
+        console.log("Ya has disparado en esta casilla.");
+        return;
+    }
+    
+    shotsFired.add(shotKey);
+    socket.send(JSON.stringify({ type: 'shoot', playerId, row, col }));
+}
 
 function updateBoard(boardId, row, col, result) {
     const cell = document.querySelector(`#${boardId} .position[data-row='${row}'][data-col='${col}']`);
     if (result === 'hit') {
-        cell.style.backgroundColor = 'red';
+        cell.style.backgroundColor = 'red';  // Cambio de color a rojo cuando se acierta
     } else if (result === 'miss') {
-        cell.style.backgroundColor = 'gray';
-    } else if (result === 'sunk') {
-        cell.style.backgroundColor = 'darkred';
+        cell.style.backgroundColor = 'gray'; // Cambio de color a gris cuando se falla
     }
+    // Aquí ya no necesitamos manejar "sunk"
 }
 

@@ -28,9 +28,9 @@
 }
 
 .position.ship {
-    background-image: url("../img/barco.png");
-    background-size: cover;
+    background-color: blue !important;
 }
+
 
 .orientation {
     padding: 10px;
