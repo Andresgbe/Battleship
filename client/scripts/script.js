@@ -17,14 +17,42 @@ const shipTypes = [
     { name: "Destructor", size: 2 }
 ];
 
+function isSubmarineIntact() {
+    // Verificar si el submarino está en el tablero
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 10; col++) {
+            if (board[row][col] === 1) { // Si encontramos parte de un barco
+                if (isSubmarinePosition(row, col)) {  // Verificar si es parte del submarino
+                    return true;
+                }
+            }
+        }
+    }
+    return false; // El submarino no está intacto
+}
+
+// Verifica si una casilla está ocupada por el submarino (tamaño 3)
+function isSubmarinePosition(row, col) {
+    // Implementa lógica para verificar si esta casilla forma parte del submarino
+    // Esto puede incluir verificar el tamaño del barco y la orientación.
+    return shipTypes.some(ship => ship.name === 'Submarino');
+}
+
+
 function useSonar() {
     if (myTurn && playerPoints >= 5) {
+        // Verificar si el submarino está intacto
+        if (!isSubmarineIntact()) {
+            alert("El submarino ha sido hundido. No puedes usar el sonar.");
+            return;
+        }
         // Enviar al servidor para activar el sonar
         socket.send(JSON.stringify({ type: 'use_sonar', playerId: playerId }));
     } else {
         alert("No tienes suficientes puntos o no es tu turno.");
     }
 }
+
 
 socket.addEventListener('open', () => {
     console.log('Conectado al servidor WebSocket');
