@@ -39,12 +39,17 @@ const initializePlayer = (playerId, socket) => {
 const switchTurn = () => {
     const playerIds = Object.keys(players);
     if (playerIds.length === 2) {
+        if (players[playerIds[0]].shipsRemaining === 0 || players[playerIds[1]].shipsRemaining === 0) {
+            // Si el juego terminó, no cambiar el turno
+            return;
+        }
         currentTurn = playerIds.find(id => id !== currentTurn);
         playerIds.forEach(id => {
             players[id].socket.send(JSON.stringify({ type: 'turn', playerId: currentTurn }));
         });
     }
 };
+
 
 /*
 const isShipSunk = (board, row, col) => {
@@ -59,26 +64,35 @@ const isShipSunk = (board, row, col) => {
 
 const processShot = (shooterId, targetId, row, col) => {
     const board = players[targetId].board;
+    const shooter = players[shooterId]; // Jugador que disparó
 
     if (board[row][col] === 1) { // Si se acierta el barco
-        board[row][col] = -1; // Marca el disparo
+        board[row][col] = -1; // Marca la casilla como tocada
 
-        // Verificar si todas las casillas de los barcos del oponente han sido acertadas
+        // Acumular un punto por el hit
+        shooter.points = (shooter.points || 0) + 1;
+
+        // Enviar los puntos actuales al cliente
+        shooter.socket.send(JSON.stringify({ type: 'update_points', points: shooter.points }));
+
+        // Verificar si el submarino está intacto y si se puede usar el sonar
         if (checkIfOpponentSunkAllShips(targetId)) {
+            // Si todos los barcos del oponente han sido hundidos, el juego termina
             players[shooterId].socket.send(JSON.stringify({ type: 'game_over', winner: shooterId }));
             players[targetId].socket.send(JSON.stringify({ type: 'game_over', winner: shooterId }));
-            return { row, col, result: 'game_over' }; // Termina el juego
+            return { row, col, result: 'game_over' }; // Finaliza el juego
         }
 
-        return { row, col, result: 'hit' }; // Si solo es un hit
+        return { row, col, result: 'hit' }; // Retorna el hit
     } else if (board[row][col] === 0) { // Si se dispara al agua
         board[row][col] = -2;
-        return { row, col, result: 'miss' }; // Solo "miss"
+        return { row, col, result: 'miss' }; // Resultado "miss"
     } else {
-        return { row, col, result: 'already_shot' }; // Ya se disparó en esta celda
+        return { row, col, result: 'already_shot' }; // Ya se disparó en esta casilla
     }
 };
 
+// Función para verificar si todos los barcos del oponente han sido hundidos
 const checkIfOpponentSunkAllShips = (targetId) => {
     const board = players[targetId].board;
 
@@ -93,6 +107,7 @@ const checkIfOpponentSunkAllShips = (targetId) => {
 
     return true; // Todos los barcos del oponente han sido tocados
 };
+
 
 
 server.on('connection', (socket) => {

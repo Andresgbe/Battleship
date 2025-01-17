@@ -55,3 +55,10 @@
     background-color: green;
     color: white;
 }
+
+#player-points {
+    font-size: 20px;
+    margin: 10px 0;
+    color: #333;
+    font-weight: bold;
+}

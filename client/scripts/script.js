@@ -23,20 +23,51 @@ socket.addEventListener('message', (event) => {
     const data = JSON.parse(event.data);
     console.log('Mensaje recibido del servidor:', data);
 
+    // Manejo de la bienvenida
     if (data.type === 'welcome') {
         playerId = data.playerId;
         console.log(`Tu ID de jugador es: ${playerId}`);
-    } else if (data.type === 'game_start') {
+    } 
+    // Manejo del inicio del juego
+    else if (data.type === 'game_start') {
         document.getElementById('turn-info').textContent = "¡El juego ha comenzado!";
-    } else if (data.type === 'turn') {
+    } 
+    // Manejo del turno
+    else if (data.type === 'turn') {
         myTurn = data.playerId === playerId;
         document.getElementById('turn-info').textContent = myTurn ? "Tu turno" : "Turno del oponente";
-    } else if (data.type === 'shoot_response') {
+    } 
+    // Respuesta del disparo
+    else if (data.type === 'shoot_response') {
         updateBoard('enemy-board', data.row, data.col, data.result);
-    } else if (data.type === 'opponent_shot') {
+    } 
+    // Respuesta del disparo del oponente
+    else if (data.type === 'opponent_shot') {
         updateBoard('player-board', data.row, data.col, data.result);
     }
+    // Manejo del fin del juego
+    else if (data.type === 'game_over') {
+        alert(`¡Juego terminado! El ganador es ${data.winner}`);
+        disableBoard(); // Deshabilitar el tablero para evitar más disparos
+    }
+    // Manejo de la actualización de puntos
+    else if (data.type === 'update_points') {
+        // Actualizamos el puntaje mostrado en la interfaz
+        document.getElementById('player-points').textContent = `Puntos: ${data.points}`;
+    }
 });
+
+
+
+// Función para deshabilitar las interacciones con el tablero
+function disableBoard() {
+    const cells = document.querySelectorAll('.position');
+    cells.forEach(cell => {
+        cell.removeEventListener('click', placeShip); // Deshabilita la colocación de barcos
+        cell.removeEventListener('click', handleShot); // Deshabilita los disparos
+        cell.style.pointerEvents = 'none'; // Desactiva los clics
+    });
+}
 
 document.getElementById('confirm-setup').addEventListener('click', () => {
     socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
