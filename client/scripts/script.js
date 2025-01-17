@@ -38,7 +38,22 @@ socket.addEventListener('message', (event) => {
     }
 });
 
+// 🔹 MODIFICACIÓN: Deshabilitar el botón hasta que los 5 barcos sean colocados
+document.getElementById('confirm-setup').disabled = true;
+
+function checkShipsPlacement() {
+    if (placedShips.size === 5) {
+        document.getElementById('confirm-setup').disabled = false; // Habilitar el botón
+    } else {
+        document.getElementById('confirm-setup').disabled = true; // Mantener deshabilitado si faltan barcos
+    }
+}
+
 document.getElementById('confirm-setup').addEventListener('click', () => {
+    if (placedShips.size < 5) {
+        alert("Debes colocar todos los barcos antes de confirmar.");
+        return;
+    }
     socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
 });
 
@@ -102,6 +117,7 @@ function placeShip(event) {
             }
         }
         placedShips.add(selectedShip.name);
+        checkShipsPlacement(); // 🔹 Verificar si se deben habilitar los botones después de colocar un barco
         renderBoard();
     } else {
         console.log('No se puede colocar el barco aquí');
@@ -161,3 +177,4 @@ function updateBoard(boardId, row, col, result) {
         cell.style.backgroundColor = 'darkred';
     }
 }
+

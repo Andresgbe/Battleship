@@ -16,11 +16,9 @@ const shipTypes = [
     { name: "Destructor", size: 2 }
 ];
 
-
 const createEmptyBoard = () => {
     return Array(10).fill(null).map(() => Array(10).fill(0));
 };
-
 
 const initializePlayer = (playerId, socket) => {
     players[playerId] = {
@@ -35,17 +33,17 @@ const initializePlayer = (playerId, socket) => {
     }
 };
 
-
 const switchTurn = () => {
     const playerIds = Object.keys(players);
     if (playerIds.length === 2) {
         currentTurn = playerIds.find(id => id !== currentTurn);
         playerIds.forEach(id => {
-            players[id].socket.send(JSON.stringify({ type: 'turn', playerId: currentTurn }));
+            if (players[id].socket.readyState === WebSocket.OPEN) {
+                players[id].socket.send(JSON.stringify({ type: 'turn', playerId: currentTurn }));
+            }
         });
     }
 };
-
 
 const isShipSunk = (board, row, col) => {
     for (let i = 0; i < shipTypes.length; i++) {
@@ -56,7 +54,6 @@ const isShipSunk = (board, row, col) => {
     }
     return true;
 };
-
 
 const processShot = (shooterId, targetId, row, col) => {
     const board = players[targetId].board;
@@ -81,6 +78,23 @@ const processShot = (shooterId, targetId, row, col) => {
     }
 };
 
+// Función para verificar si un jugador ha perdido
+function checkGameOver(playerId) {
+    if (players[playerId].shipsRemaining === 0) {
+        const opponentId = Object.keys(players).find(id => id !== playerId);
+        if (!opponentId) return;
+
+        // Notificar a los jugadores solo si la conexión sigue abierta
+        if (players[playerId].socket.readyState === WebSocket.OPEN) {
+            players[playerId].socket.send(JSON.stringify({ type: 'game_over', winner: opponentId }));
+        }
+        if (players[opponentId].socket.readyState === WebSocket.OPEN) {
+            players[opponentId].socket.send(JSON.stringify({ type: 'game_over', winner: opponentId }));
+        }
+
+        console.log(`Jugador ${opponentId} ha ganado la partida.`);
+    }
+}
 
 server.on('connection', (socket) => {
     const playerId = `player-${Date.now()}`;
@@ -97,7 +111,9 @@ server.on('connection', (socket) => {
 
                 if (Object.keys(players).every(id => players[id].ready)) {
                     Object.values(players).forEach(player => {
-                        player.socket.send(JSON.stringify({ type: 'game_start' }));
+                        if (player.socket.readyState === WebSocket.OPEN) {
+                            player.socket.send(JSON.stringify({ type: 'game_start' }));
+                        }
                     });
                     switchTurn();
                 }
@@ -109,12 +125,15 @@ server.on('connection', (socket) => {
 
                 const result = processShot(data.playerId, opponentId, data.row, data.col);
 
-                players[data.playerId].socket.send(JSON.stringify({ type: 'shoot_response', ...result }));
-                players[opponentId].socket.send(JSON.stringify({ type: 'opponent_shot', ...result }));
+                if (players[data.playerId].socket.readyState === WebSocket.OPEN) {
+                    players[data.playerId].socket.send(JSON.stringify({ type: 'shoot_response', ...result }));
+                }
+                if (players[opponentId].socket.readyState === WebSocket.OPEN) {
+                    players[opponentId].socket.send(JSON.stringify({ type: 'opponent_shot', ...result }));
+                }
 
                 if (result.result === 'game_over') {
-                    players[data.playerId].socket.send(JSON.stringify({ type: 'game_over', winner: data.playerId }));
-                    players[opponentId].socket.send(JSON.stringify({ type: 'game_over', winner: data.playerId }));
+                    checkGameOver(opponentId);
                 } else if (result.result === 'hit' || result.result === 'sunk') {
                     console.log(`Jugador ${data.playerId} acertó y puede volver a disparar.`);
                 } else {
