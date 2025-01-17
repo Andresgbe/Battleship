@@ -63,6 +63,26 @@ function useAttackPlanes() {
     }
 }
 
+function useCruiseMissile() {
+    if (myTurn && playerPoints >= 15) {
+        // Enviar al servidor para activar el misil crucero
+        socket.send(JSON.stringify({ type: 'use_cruise_missile', playerId: playerId }));
+    } else {
+        alert("No tienes suficientes puntos o no es tu turno.");
+    }
+}
+
+
+function useDefensiveShield() {
+    if (myTurn && playerPoints >= 15) {
+        // Enviar al servidor para activar el escudo defensivo
+        socket.send(JSON.stringify({ type: 'use_defensive_shield', playerId: playerId }));
+    } else {
+        alert("No tienes suficientes puntos o no es tu turno.");
+    }
+}
+
+
 function useMine() {
     if (myTurn && playerPoints >= 5) {
         // Enviar al servidor para plantar la mina
@@ -136,11 +156,43 @@ socket.addEventListener('message', (event) => {
                     }
                 }
             });
-        }   
+        }      
         
+            // Manejo de la respuesta del Escudo Defensivo
+    if (data.type === 'defensive_shield') {
+        alert(`Escudo defensivo activado en la región [${data.row}, ${data.col}]`);
+        // Aquí puedes añadir lógica para resaltar la región 3x3 protegida
+    }
+
+    if (data.type === 'cruise_missile_result') {
+        alert(`Misil Crucero: Resultados: ${JSON.stringify(data.missiles)}`);
+        data.missiles.forEach(missile => {
+            const cell = document.querySelector(`#enemy-board .position[data-row='${missile.row}'][data-col='${missile.col}']`);
+            if (cell) {
+                if (missile.result === 'hit') {
+                    cell.style.backgroundColor = 'red';  // Resaltar los "hits"
+                } else {
+                    cell.style.backgroundColor = 'gray'; // Resaltar los "misses"
+                }
+            }
+        });
+    }
+
+    // Manejo del escudo expirado
+    if (data.type === 'shield_expired') {
+        alert("El escudo defensivo ha expirado.");
+        // Aquí puedes añadir lógica para restaurar el estado de las casillas
+    }
+
+    // Manejo de la respuesta del escudo defensivo del enemigo
+    if (data.type === 'defensive_shield_enemy') {
+        alert(`El enemigo ha activado un escudo defensivo en la región [${data.row}, ${data.col}]`);
+    }
+
+    
+
         if (data.type === 'mine_planted') {
             alert(`Mina plantada en [${data.row}, ${data.col}]`);
-            // Resaltar la casilla donde se plantó la mina
             const cell = document.querySelector(`#player-board .position[data-row='${data.row}'][data-col='${data.col}']`);
             if (cell) {
                 cell.style.backgroundColor = 'purple';  // Resaltar la mina con color
@@ -155,7 +207,35 @@ socket.addEventListener('message', (event) => {
         // Manejo de un golpe a la mina enemiga
         if (data.type === 'mine_hit') {
             alert(`¡Mina enemiga golpeada en [${data.row}, ${data.col}]!`);
+            const cell = document.querySelector(`#player-board .position[data-row='${data.row}'][data-col='${data.col}']`);
+            if (cell) {
+                cell.style.backgroundColor = 'red';  // Resaltar el golpe adicional
+            }
+        }function handleShot(event) {
+    if (!myTurn) {
+        console.log("No es tu turno.");
+        return;
+    }
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
+    const shotKey = `${row},${col}`;
+
+    // Si es un ataque a una mina, no verificamos si ya se disparó en esa casilla
+    const cell = document.querySelector(`#enemy-board .position[data-row='${row}'][data-col='${col}']`);
+    if (cell && cell.style.backgroundColor === 'purple') {  // Verifica si hay una mina en esa casilla
+        socket.send(JSON.stringify({ type: 'attack_mine', playerId: playerId, row: row, col: col }));
+    } else {
+        // Verificar si la casilla ya ha sido disparada
+        if (shotsFired.has(shotKey)) {
+            console.log("Ya has disparado en esta casilla.");
+            return;
         }
+
+        shotsFired.add(shotKey);  // Marca esta casilla como disparada
+        socket.send(JSON.stringify({ type: 'shoot', playerId: playerId, row: row, col: col }));
+    }
+}
+
 });
 
 
@@ -273,15 +353,24 @@ function handleShot(event) {
     const row = parseInt(event.target.dataset.row);
     const col = parseInt(event.target.dataset.col);
     const shotKey = `${row},${col}`;
-    
-    if (shotsFired.has(shotKey)) {
-        console.log("Ya has disparado en esta casilla.");
-        return;
+
+    const cell = document.querySelector(`#enemy-board .position[data-row='${row}'][data-col='${col}']`);
+
+    // Verifica si la casilla contiene una mina (no debería ser tratada como ya disparada)
+    if (cell && cell.getAttribute('data-mine') === 'true') {
+        socket.send(JSON.stringify({ type: 'attack_mine', playerId: playerId, row: row, col: col }));
+    } else {
+        // Verificar si ya se disparó en esta casilla
+        if (shotsFired.has(shotKey)) {
+            console.log("Ya has disparado en esta casilla.");
+            return;
+        }
+
+        shotsFired.add(shotKey);  // Marca esta casilla como disparada
+        socket.send(JSON.stringify({ type: 'shoot', playerId: playerId, row: row, col: col }));
     }
-    
-    shotsFired.add(shotKey);
-    socket.send(JSON.stringify({ type: 'shoot', playerId, row, col }));
 }
+
 
 function updateBoard(boardId, row, col, result) {
     const cell = document.querySelector(`#${boardId} .position[data-row='${row}'][data-col='${col}']`);

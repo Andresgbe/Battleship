@@ -146,7 +146,7 @@ const handlePlantMine = (playerId, players) => {
 
     // Verificar si el jugador tiene suficientes puntos
     if (player.points >= 5) {
-        player.points -= 5; // Resta los puntos
+        player.points -= 5; // Restar los puntos
         player.socket.send(JSON.stringify({ type: 'update_points', points: player.points }));
 
         // Pedir al jugador que elija una casilla para plantar la mina
@@ -158,14 +158,14 @@ const handlePlantMine = (playerId, players) => {
             row = Math.floor(Math.random() * 10);
             col = Math.floor(Math.random() * 10);
 
-            // Verificar si la casilla está vacía
+            // Verificar si la casilla está vacía (sin barco)
             if (player.board[row][col] === 0) {
                 validPlacement = true;
             }
         }
 
-        // Plantar la mina en el tablero
-        player.board[row][col] = 'M'; // 'M' representa una mina
+        // Plantar la mina en el tablero (usamos 'M' para mina)
+        player.board[row][col] = 'M';
 
         // Enviar la ubicación de la mina al jugador
         player.socket.send(JSON.stringify({
@@ -174,7 +174,7 @@ const handlePlantMine = (playerId, players) => {
             col: col
         }));
 
-        // También se puede enviar esta información al oponente si deseas
+        // También se puede enviar esta información al oponente
         const opponentId = Object.keys(players).find(id => id !== playerId);
         players[opponentId].socket.send(JSON.stringify({
             type: 'mine_planted_enemy',
@@ -186,6 +186,7 @@ const handlePlantMine = (playerId, players) => {
     }
 };
 
+// Función para manejar el ataque a la mina
 const handleMineHit = (row, col, playerId, players) => {
     const player = players[playerId];
     const opponentId = Object.keys(players).find(id => id !== playerId);
@@ -193,8 +194,8 @@ const handleMineHit = (row, col, playerId, players) => {
 
     // Verificar si la casilla atacada es una mina
     if (opponentBoard[row][col] === 'M') {
-        // Atacar la mina y restar puntos si es necesario
-        opponentBoard[row][col] = -2; // Marca como mina explotada
+        // Marca la mina como explotada
+        opponentBoard[row][col] = -2;
 
         // Elegir una casilla adyacente para el "hit" adicional
         const adjacentCell = getRandomAdjacentCell(row, col);
@@ -218,11 +219,123 @@ const handleMineHit = (row, col, playerId, players) => {
     }
 };
 
+// Función para obtener una casilla adyacente aleatoria
+const getRandomAdjacentCell = (row, col) => {
+    const adjacentCells = [
+        { row: row - 1, col: col },  // Arriba
+        { row: row + 1, col: col },  // Abajo
+        { row: row, col: col - 1 },  // Izquierda
+        { row: row, col: col + 1 },  // Derecha
+    ];
+
+    // Filtrar las celdas válidas dentro del tablero
+    const validCells = adjacentCells.filter(cell => 
+        cell.row >= 0 && cell.row < 10 && cell.col >= 0 && cell.col < 10
+    );
+
+    if (validCells.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * validCells.length);
+    return validCells[randomIndex];
+};
+
+// Función para manejar el uso del Escudo Defensivo
+const handleDefensiveShield = (playerId, players) => {
+    const player = players[playerId];
+    const opponentId = Object.keys(players).find(id => id !== playerId);
+    const opponentBoard = players[opponentId].board;
+
+    // Verificar si el jugador tiene suficientes puntos
+    if (player.points >= 15) {
+        player.points -= 15; // Resta los puntos
+        player.socket.send(JSON.stringify({ type: 'update_points', points: player.points }));
+
+        // Elegir una región 3x3 al azar para proteger
+        const shieldRow = Math.floor(Math.random() * 8);  // Asegurarse de que sea un lugar válido
+        const shieldCol = Math.floor(Math.random() * 8);  // Asegurarse de que sea un lugar válido
+
+        // Marca la región 3x3 en el tablero del oponente como protegida
+        for (let i = shieldRow; i < shieldRow + 3; i++) {
+            for (let j = shieldCol; j < shieldCol + 3; j++) {
+                opponentBoard[i][j] = 'S'; // 'S' marca la casilla como protegida
+            }
+        }
+
+        // Enviar la ubicación del escudo al jugador y al oponente
+        player.socket.send(JSON.stringify({
+            type: 'defensive_shield',
+            row: shieldRow,
+            col: shieldCol
+        }));
+
+        players[opponentId].socket.send(JSON.stringify({
+            type: 'defensive_shield_enemy',
+            row: shieldRow,
+            col: shieldCol
+        }));
+
+        // Marcar que el escudo estará activo durante 3 turnos
+        setTimeout(() => {
+            // Desactivar el escudo después de 3 turnos (simulado como 30 segundos)
+            for (let i = shieldRow; i < shieldRow + 3; i++) {
+                for (let j = shieldCol; j < shieldCol + 3; j++) {
+                    opponentBoard[i][j] = 0; // Restaurar el estado a normal
+                }
+            }
+
+            // Notificar al jugador y oponente que el escudo ha expirado
+            player.socket.send(JSON.stringify({ type: 'shield_expired' }));
+            players[opponentId].socket.send(JSON.stringify({ type: 'shield_expired_enemy' }));
+        }, 30000); // Desactivar el escudo después de 30 segundos (simulación)
+    } else {
+        player.socket.send(JSON.stringify({ type: 'shield_error', message: 'No tienes suficientes puntos.' }));
+    }
+};
+
+// Función para manejar el uso del Misil Crucero
+const handleCruiseMissile = (playerId, players) => {
+    const player = players[playerId];
+    const opponentId = Object.keys(players).find(id => id !== playerId);
+    const opponentBoard = players[opponentId].board;
+
+    // Verificar si el jugador tiene suficientes puntos
+    if (player.points >= 15) {
+        player.points -= 15; // Resta los puntos
+        player.socket.send(JSON.stringify({ type: 'update_points', points: player.points }));
+
+        // Elegir una región 3x3 al azar para atacar
+        const missileRow = Math.floor(Math.random() * 8);  // Asegurarse de que sea un lugar válido
+        const missileCol = Math.floor(Math.random() * 8);  // Asegurarse de que sea un lugar válido
+
+        const missileResults = [];
+
+        // Marcar las casillas 3x3 como atacadas
+        for (let i = missileRow; i < missileRow + 3; i++) {
+            for (let j = missileCol; j < missileCol + 3; j++) {
+                if (opponentBoard[i][j] === 1) {
+                    opponentBoard[i][j] = -1;  // Marca como tocada
+                    missileResults.push({ row: i, col: j, result: 'hit' });
+                } else {
+                    missileResults.push({ row: i, col: j, result: 'miss' });
+                }
+            }
+        }
+
+        // Enviar los resultados al jugador
+        player.socket.send(JSON.stringify({ type: 'cruise_missile_result', missiles: missileResults }));
+
+        // Enviar los resultados al oponente
+        players[opponentId].socket.send(JSON.stringify({ type: 'cruise_missile_enemy', missiles: missileResults }));
+    } else {
+        player.socket.send(JSON.stringify({ type: 'cruise_missile_error', message: 'No tienes suficientes puntos.' }));
+    }
+};
 
 
 module.exports = {
     handleSonarUse,
     handleAttackPlanes,
     handlePlantMine,
-    handleMineHit
+    handleMineHit,
+    handleDefensiveShield,
+    handleCruiseMissile
 };

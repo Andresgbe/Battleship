@@ -1,7 +1,9 @@
 const WebSocket = require('ws');
 const { handleSonarUse } = require('./powerups');
 const { handleAttackPlanes } = require('./powerups');  // Asegúrate de importar la función correctamente
-const { handlePlantMine, handleMineHit } = require('./powerups');
+const { handlePlantMine, handleMineHit } = require('./powerups');  // Asegúrate de importar las funciones necesarias
+const { handleDefensiveShield } = require('./powerups');  // Asegúrate de importar correctamente
+const { handleCruiseMissile } = require('./powerups');  // Asegúrate de importar la función
 
 
 
@@ -56,7 +58,6 @@ const switchTurn = () => {
         });
     }
 };
-
 
 /*
 const isShipSunk = (board, row, col) => {
@@ -162,21 +163,32 @@ server.on('connection', (socket) => {
                 handleSonarUse(data.playerId, players);  // Llamar a la función de sonar
             }
 
+            // solicitud airplane attack
             if (data.type === 'use_attack_planes' && data.playerId === currentTurn) {
                 handleAttackPlanes(data.playerId, players);  // Llamada a la función para manejar el ataque
             }
 
-                    // Manejo del uso de la mina marina
-                    if (data.type === 'use_mine' && data.playerId === currentTurn) {
-                        handlePlantMine(data.playerId, players);  // Llamada a la función de Mina Marina
-                    }
+            //misil crucero
+            if (data.type === 'use_cruise_missile' && data.playerId === currentTurn) {
+                handleCruiseMissile(data.playerId, players);  // Llamada a la función de Misil Crucero
+            }
             
-                    // Manejo del ataque a la mina
-                    if (data.type === 'attack_mine' && data.playerId === currentTurn) {
-                        const { row, col } = data;
-                        handleMineHit(row, col, data.playerId, players);  // Llamada a la función de ataque a la mina
-                    }
-                    
+            if (data.type === 'use_defensive_shield' && data.playerId === currentTurn) {
+                handleDefensiveShield(data.playerId, players);  // Llamada a la función del escudo defensivo
+            }
+
+            // Manejo del uso de la mina marina
+            if (data.type === 'use_mine' && data.playerId === currentTurn) {
+                handlePlantMine(data.playerId, players);  // Llamada a la función de Mina Marina
+            }
+
+            // Manejo del ataque a la mina
+             if (data.type === 'attack_mine' && data.playerId === currentTurn) {
+              const { row, col } = data;
+             handleMineHit(row, col, data.playerId, players);  // Llamada a la función de ataque a la mina
+             }
+            
+             
         } catch (error) {
             console.error("Error procesando el mensaje:", error);
         }
