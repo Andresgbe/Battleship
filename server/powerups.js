@@ -70,12 +70,6 @@ const getRandomShipPosition = (board) => {
     return shipPositions[randomIndex]; // Selecciona una casilla aleatoria
 };
 
-module.exports = {
-    handleSonarUse
-};
-
-
-
 
 
 // Función para manejar el uso de los Aviones de Ataque
@@ -147,6 +141,6 @@ const launchMissiles = (opponentBoard) => {
 };
 
 module.exports = {
+    handleSonarUse,
     handleAttackPlanes
 };
-
