@@ -38,6 +38,7 @@ function isSubmarinePosition(row, col) {
     return shipTypes.some(ship => ship.name === 'Submarino');
 }
 
+//Power Ups FUnctions
 
 function useSonar() {
     if (myTurn && playerPoints >= 5) {
@@ -48,6 +49,15 @@ function useSonar() {
         }
         // Enviar al servidor para activar el sonar
         socket.send(JSON.stringify({ type: 'use_sonar', playerId: playerId }));
+    } else {
+        alert("No tienes suficientes puntos o no es tu turno.");
+    }
+}
+
+function useAttackPlanes() {
+    if (myTurn && playerPoints >= 10) {
+        // Enviar al servidor para activar los aviones de ataque
+        socket.send(JSON.stringify({ type: 'use_attack_planes', playerId: playerId }));
     } else {
         alert("No tienes suficientes puntos o no es tu turno.");
     }
@@ -104,6 +114,24 @@ socket.addEventListener('message', (event) => {
             cell.style.backgroundColor = 'yellow';  // Resaltar la casilla revelada
             }
         }
+
+     // Manejo del resultado de los Aviones de Ataque
+     if (data.type === 'attack_planes_result') {
+        alert(`Aviones de Ataque: Resultados: ${JSON.stringify(data.missiles)}`);
+        // Aquí puedes agregar lógica para resaltar las casillas en el tablero
+        data.missiles.forEach(missile => {
+            const cell = document.querySelector(`#enemy-board .position[data-row='${missile.row}'][data-col='${missile.col}']`);
+            if (cell) {
+                if (missile.result === 'hit') {
+                    cell.style.backgroundColor = 'red'; // Resaltar los "hits"
+                } else {
+                    cell.style.backgroundColor = 'gray'; // Resaltar los "misses"
+                }
+            }
+        });
+    }
+
+
 });
 
 

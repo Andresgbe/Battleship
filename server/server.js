@@ -1,5 +1,7 @@
 const WebSocket = require('ws');
 const { handleSonarUse } = require('./powerups');
+const { handleAttackPlanes } = require('./powerups');  // Importa la función de Aviones de Ataque
+
 
 
 const PORT = 8080;
@@ -156,6 +158,12 @@ server.on('connection', (socket) => {
             if (data.type === 'use_sonar' && data.playerId === currentTurn) {
                 handleSonarUse(data.playerId, players);  // Llamar a la función de sonar
             }
+
+            if (data.type === 'use_attack_planes' && data.playerId === currentTurn) {
+                handleAttackPlanes(data.playerId, players);  // Llamada a la función para manejar el ataque
+            }
+
+            
 
         } catch (error) {
             console.error("Error procesando el mensaje:", error);
