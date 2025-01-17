@@ -63,6 +63,15 @@ function useAttackPlanes() {
     }
 }
 
+function useMine() {
+    if (myTurn && playerPoints >= 5) {
+        // Enviar al servidor para plantar la mina
+        socket.send(JSON.stringify({ type: 'use_mine', playerId: playerId }));
+    } else {
+        alert("No tienes suficientes puntos o no es tu turno.");
+    }
+}
+
 
 socket.addEventListener('open', () => {
     console.log('Conectado al servidor WebSocket');
@@ -127,7 +136,26 @@ socket.addEventListener('message', (event) => {
                     }
                 }
             });
-        }        
+        }   
+        
+        if (data.type === 'mine_planted') {
+            alert(`Mina plantada en [${data.row}, ${data.col}]`);
+            // Resaltar la casilla donde se plantó la mina
+            const cell = document.querySelector(`#player-board .position[data-row='${data.row}'][data-col='${data.col}']`);
+            if (cell) {
+                cell.style.backgroundColor = 'purple';  // Resaltar la mina con color
+            }
+        }
+    
+        // Manejo de un golpe a la mina
+        if (data.type === 'mine_hit_success') {
+            alert(`¡La mina explotó en [${data.row}, ${data.col}]!`);
+        }
+    
+        // Manejo de un golpe a la mina enemiga
+        if (data.type === 'mine_hit') {
+            alert(`¡Mina enemiga golpeada en [${data.row}, ${data.col}]!`);
+        }
 });
 
 

@@ -1,6 +1,9 @@
 const WebSocket = require('ws');
 const { handleSonarUse } = require('./powerups');
 const { handleAttackPlanes } = require('./powerups');  // Asegúrate de importar la función correctamente
+const { handlePlantMine, handleMineHit } = require('./powerups');
+
+
 
 
 
@@ -163,6 +166,17 @@ server.on('connection', (socket) => {
                 handleAttackPlanes(data.playerId, players);  // Llamada a la función para manejar el ataque
             }
 
+                    // Manejo del uso de la mina marina
+                    if (data.type === 'use_mine' && data.playerId === currentTurn) {
+                        handlePlantMine(data.playerId, players);  // Llamada a la función de Mina Marina
+                    }
+            
+                    // Manejo del ataque a la mina
+                    if (data.type === 'attack_mine' && data.playerId === currentTurn) {
+                        const { row, col } = data;
+                        handleMineHit(row, col, data.playerId, players);  // Llamada a la función de ataque a la mina
+                    }
+                    
         } catch (error) {
             console.error("Error procesando el mensaje:", error);
         }

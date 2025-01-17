@@ -140,7 +140,89 @@ const launchMissiles = (opponentBoard) => {
     return missileResults; // Devuelve los resultados de los misiles
 };
 
+// Función para manejar el uso de la Mina Marina
+const handlePlantMine = (playerId, players) => {
+    const player = players[playerId];
+
+    // Verificar si el jugador tiene suficientes puntos
+    if (player.points >= 5) {
+        player.points -= 5; // Resta los puntos
+        player.socket.send(JSON.stringify({ type: 'update_points', points: player.points }));
+
+        // Pedir al jugador que elija una casilla para plantar la mina
+        let row, col;
+
+        // Asegurarse de que la casilla esté vacía
+        let validPlacement = false;
+        while (!validPlacement) {
+            row = Math.floor(Math.random() * 10);
+            col = Math.floor(Math.random() * 10);
+
+            // Verificar si la casilla está vacía
+            if (player.board[row][col] === 0) {
+                validPlacement = true;
+            }
+        }
+
+        // Plantar la mina en el tablero
+        player.board[row][col] = 'M'; // 'M' representa una mina
+
+        // Enviar la ubicación de la mina al jugador
+        player.socket.send(JSON.stringify({
+            type: 'mine_planted',
+            row: row,
+            col: col
+        }));
+
+        // También se puede enviar esta información al oponente si deseas
+        const opponentId = Object.keys(players).find(id => id !== playerId);
+        players[opponentId].socket.send(JSON.stringify({
+            type: 'mine_planted_enemy',
+            row: row,
+            col: col
+        }));
+    } else {
+        player.socket.send(JSON.stringify({ type: 'mine_error', message: 'No tienes suficientes puntos.' }));
+    }
+};
+
+const handleMineHit = (row, col, playerId, players) => {
+    const player = players[playerId];
+    const opponentId = Object.keys(players).find(id => id !== playerId);
+    const opponentBoard = players[opponentId].board;
+
+    // Verificar si la casilla atacada es una mina
+    if (opponentBoard[row][col] === 'M') {
+        // Atacar la mina y restar puntos si es necesario
+        opponentBoard[row][col] = -2; // Marca como mina explotada
+
+        // Elegir una casilla adyacente para el "hit" adicional
+        const adjacentCell = getRandomAdjacentCell(row, col);
+
+        // Verificar si la casilla adyacente es válida
+        if (adjacentCell) {
+            const { row: adjRow, col: adjCol } = adjacentCell;
+            opponentBoard[adjRow][adjCol] = -1; // Marca la casilla adyacente como tocada
+            players[opponentId].socket.send(JSON.stringify({
+                type: 'mine_hit',
+                row: adjRow,
+                col: adjCol
+            }));
+        }
+
+        player.socket.send(JSON.stringify({
+            type: 'mine_hit_success',
+            row: row,
+            col: col
+        }));
+    }
+};
+
+
+
 module.exports = {
     handleSonarUse,
-    handleAttackPlanes
+    handleAttackPlanes,
+    handlePlantMine,
+    handleMineHit
 };
