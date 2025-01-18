@@ -124,75 +124,83 @@ server.on('connection', (socket) => {
     socket.on('message', (message) => {
         try {
             const data = JSON.parse(message);
-
+    
+            // Función auxiliar para verificar si es el turno del jugador
+            const isPlayerTurn = (playerId) => playerId === currentTurn;
+    
             // Manejo de la configuración inicial de los jugadores
             if (data.type === 'setup_complete') {
                 players[data.playerId].board = data.board;
                 players[data.playerId].ready = true;
-
+    
                 if (Object.keys(players).every(id => players[id].ready)) {
                     Object.values(players).forEach(player => {
                         player.socket.send(JSON.stringify({ type: 'game_start' }));
                     });
                     switchTurn();
                 }
+                return; // Salir para evitar el resto de condiciones
+    
             }
-
+    
+            // Verificamos si el jugador está en su turno
+            if (!isPlayerTurn(data.playerId)) return;
+    
             // Manejo de los disparos
-            if (data.type === 'shoot' && data.playerId === currentTurn) {
+            if (data.type === 'shoot') {
                 const opponentId = Object.keys(players).find(id => id !== data.playerId);
                 if (!opponentId) return;
-
+    
                 const result = processShot(data.playerId, opponentId, data.row, data.col);
-
                 players[data.playerId].socket.send(JSON.stringify({ type: 'shoot_response', ...result }));
                 players[opponentId].socket.send(JSON.stringify({ type: 'opponent_shot', ...result }));
-
+    
                 if (result.result === 'game_over') {
                     players[data.playerId].socket.send(JSON.stringify({ type: 'game_over', winner: data.playerId }));
                     players[opponentId].socket.send(JSON.stringify({ type: 'game_over', winner: data.playerId }));
-                } else if (result.result === 'hit') {  // Solo manejamos 'hit'
-                    console.log(`Jugador ${data.playerId} acertó y puede volver a disparar.`);
-                } else {
+                } else if (result.result !== 'hit') {
                     switchTurn();
                 }
+                return; // Salir para evitar que el código se ejecute de nuevo
+    
             }
-
-            // Manejo de la solicitud de uso de sonar
-            if (data.type === 'use_sonar' && data.playerId === currentTurn) {
-                handleSonarUse(data.playerId, players);  // Llamar a la función de sonar
+    
+            // Manejo de los power-ups
+            switch (data.type) {
+                case 'use_sonar':
+                    handleSonarUse(data.playerId, players);  // Llamada a la función de sonar
+                    break;
+    
+                case 'use_attack_planes':
+                    handleAttackPlanes(data.playerId, players);  // Llamada a la función de aviones de ataque
+                    break;
+    
+                case 'use_cruise_missile':
+                    handleCruiseMissile(data.playerId, players);  // Llamada a la función de Misil Crucero
+                    break;
+    
+                case 'use_defensive_shield':
+                    handleDefensiveShield(data.playerId, players);  // Llamada a la función de Escudo Defensivo
+                    break;
+    
+                case 'use_mine':
+                    handlePlantMine(data.playerId, players);  // Llamada a la función de Mina Marina
+                    break;
+    
+                case 'attack_mine':
+                    const { row, col } = data;
+                    handleMineHit(row, col, data.playerId, players);  // Llamada a la función de ataque a la mina
+                    break;
+    
+                default:
+                    console.log(`Tipo de mensaje no reconocido: ${data.type}`);
             }
-
-            // solicitud airplane attack
-            if (data.type === 'use_attack_planes' && data.playerId === currentTurn) {
-                handleAttackPlanes(data.playerId, players);  // Llamada a la función para manejar el ataque
-            }
-
-            //misil crucero
-            if (data.type === 'use_cruise_missile' && data.playerId === currentTurn) {
-                handleCruiseMissile(data.playerId, players);  // Llamada a la función de Misil Crucero
-            }
-            
-            if (data.type === 'use_defensive_shield' && data.playerId === currentTurn) {
-                handleDefensiveShield(data.playerId, players);  // Llamada a la función del escudo defensivo
-            }
-
-            // Manejo del uso de la mina marina
-            if (data.type === 'use_mine' && data.playerId === currentTurn) {
-                handlePlantMine(data.playerId, players);  // Llamada a la función de Mina Marina
-            }
-
-            // Manejo del ataque a la mina
-             if (data.type === 'attack_mine' && data.playerId === currentTurn) {
-              const { row, col } = data;
-             handleMineHit(row, col, data.playerId, players);  // Llamada a la función de ataque a la mina
-             }
-            
-             
+    
         } catch (error) {
             console.error("Error procesando el mensaje:", error);
         }
     });
+    
 
     socket.on('close', () => {
         console.log(`Jugador ${playerId} desconectado`);

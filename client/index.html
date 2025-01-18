@@ -54,14 +54,19 @@
     <div class="game-container">
         <div>
             <h3>Tu Tablero (Coloca tus barcos)</h3>
-            <div class="board" id="player-board"></div>
+            <div class="board" id="player-board"></div> <!-- Asegúrate de que este ID exista -->
         </div>
-
+    
         <div>
             <h3>Tablero del Oponente</h3>
-            <div class="board" id="enemy-board"></div>
+            <div class="board" id="enemy-board"></div> <!-- Asegúrate de que este ID exista -->
+        </div>
+    
+        <div id="opponent-boards">
+            <!-- Los tableros de los oponentes se agregarán aquí dinámicamente -->
         </div>
     </div>
+    
 
     <script src="scripts/script.js"></script>
 </body>
