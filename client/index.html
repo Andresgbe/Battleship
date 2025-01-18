@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +13,17 @@
     <div id="player-points">Puntos: 0</div> <!-- Mostrará los puntos acumulados -->
 
     <h2 id="turn-info">Esperando jugadores...</h2>
+
+    <!-- Menú de selección de número de jugadores -->
+    <div id="player-setup">
+        <label for="player-count">Selecciona cuántos jugadores jugarán:</label>
+        <select id="player-count">
+            <option value="2">2 Jugadores</option>
+            <option value="3">3 Jugadores</option>
+            <option value="4">4 Jugadores</option>
+        </select>
+        <button id="start-game" onclick="startGame()">Iniciar Juego</button>
+    </div>
 
     <div class="controls">
         <label for="ship-select">Selecciona un barco:</label>
@@ -32,20 +43,12 @@
     
         <button id="confirm-setup">Confirmar Barcos</button>
 
-        <!-- Botón para usar Sonar -->
+        <!-- Botones de power-ups -->
         <button id="use-sonar" onclick="useSonar()">Usar Sonar (5 puntos)</button>
         <button id="use-attack-planes" onclick="useAttackPlanes()">Usar Aviones de Ataque (10 puntos)</button>
-        <!-- Botón para usar el Misil Crucero -->
-<button id="use-cruise-missile" onclick="useCruiseMissile()">Usar Misil Crucero (15 puntos)</button>
-
-
-        <!-- Botón para usar el Escudo Defensivo -->
-<button id="use-defensive-shield" onclick="useDefensiveShield()">Usar Escudo Defensivo (15 puntos)</button>
-
-
-        <!-- Botón para usar la Mina Marina -->
-<button id="use-mine" onclick="useMine()">Usar Mina Marina (5 puntos)</button>
-
+        <button id="use-cruise-missile" onclick="useCruiseMissile()">Usar Misil Crucero (15 puntos)</button>
+        <button id="use-defensive-shield" onclick="useDefensiveShield()">Usar Escudo Defensivo (15 puntos)</button>
+        <button id="use-mine" onclick="useMine()">Usar Mina Marina (5 puntos)</button>
     </div>
     
     <div class="game-container">
