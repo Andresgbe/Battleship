@@ -124,6 +124,11 @@ socket.addEventListener('message', (event) => {
   console.log('Mensaje recibido del servidor:', data);
 
   switch (data.type) {
+    case 'welcome':
+      playerId = data.playerId; // Asegúrate de que esto se establece correctamente
+      console.log(`playerId establecido: ${playerId}`);
+    break;
+
     case 'startGame':
       totalPlayers = data.playerCount;
       document.getElementById('turn-info').textContent = `¡El juego ha comenzado! Jugadores conectados: ${totalPlayers}`;
@@ -284,7 +289,11 @@ function disableBoard() {
 }
 
 document.getElementById('confirm-setup').addEventListener('click', () => {
-    socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
+  if (playerId) { // Asegurarse de que playerId no es null
+      socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
+  } else {
+      console.error('playerId no ha sido definido');
+  }
 });
 
 document.getElementById('ship-select').addEventListener('change', (event) => {

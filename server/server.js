@@ -5,7 +5,8 @@ const { handlePlantMine, handleMineHit } = require('./powerups');  // Asegúrate
 const { handleDefensiveShield } = require('./powerups');  // Asegúrate de importar correctamente
 const { handleCruiseMissile } = require('./powerups');  // Asegúrate de importar la función
 
-
+const players = {};
+let currentTurn = null;
 let numPlayers = 0;  // Contador de jugadores conectados
 const maxPlayers = 4;  // Número máximo de jugadores
 
@@ -16,8 +17,7 @@ const server = new WebSocket.Server({ port: PORT });
 
 console.log(`Servidor WebSocket escuchando en el puerto ${PORT}`);
 
-const players = {};
-let currentTurn = null;
+
 
 const shipTypes = [
     { name: "Portaaviones", size: 5 },
@@ -28,9 +28,9 @@ const shipTypes = [
 ];
 
 
-const createEmptyBoard = () => {
+function createEmptyBoard() {
     return Array(10).fill(null).map(() => Array(10).fill(0));
-};
+}
 
 
 const initializePlayer = (playerId, socket) => {
@@ -48,13 +48,10 @@ const initializePlayer = (playerId, socket) => {
 
 
 function switchTurn() {
-    const playerIds = Object.keys(players);
-    let index = playerIds.indexOf(currentTurn);
-    index = (index + 1) % playerIds.length;
-    currentTurn = playerIds[index];
-    playerIds.forEach(id => {
-        players[id].socket.send(JSON.stringify({ type: 'turn', playerId: currentTurn }));
-    });
+    let playerIds = Object.keys(players);
+    let currentIndex = playerIds.indexOf(currentTurn);
+    currentTurn = playerIds[(currentIndex + 1) % playerIds.length];
+    players[currentTurn].socket.send(JSON.stringify({ type: 'your_turn' }));
 }
 
 /*
@@ -107,56 +104,63 @@ function checkIfOpponentSunkAllShips(targetId) {
 
 
 server.on('connection', (socket) => {
-    // Paso 2: Comprobar el límite de jugadores
     if (numPlayers >= maxPlayers) {
         console.log("Número máximo de jugadores alcanzado.");
         socket.close(1000, "Número máximo de jugadores alcanzado.");
         return;
     }
 
-    // Incrementa el contador de jugadores
     numPlayers++;
-    const playerId = `player-${numPlayers}`;  // Asigna un ID único basado en el número de jugador
+    const playerId = `player-${numPlayers}`;
+    console.log(`Nuevo jugador conectado: ${playerId}`);
 
-    // Paso 3: Configura el jugador
     players[playerId] = {
-        socket: socket,
-        board: createEmptyBoard(), // Asegúrate de que esta función esté definida correctamente
-        ready: false
+        socket,
+        board: createEmptyBoard(),
+        ready: false,
+        points: 0
     };
     console.log(`Nuevo jugador conectado: ${playerId}`);
-    socket.send(JSON.stringify({ type: 'welcome', playerId }));
+    socket.send(JSON.stringify({ type: 'welcome', playerId: playerId }));
 
-    // Manejo de mensajes del jugador
     socket.on('message', (message) => {
         try {
             const data = JSON.parse(message);
+    
+            // Procesar la configuración completa de los barcos
             if (data.type === 'setup_complete') {
-                players[data.playerId].board = data.board;
-                players[data.playerId].ready = true;
-                if (Object.keys(players).every(id => players[id].ready)) {
-                    Object.values(players).forEach(player => {
-                        player.socket.send(JSON.stringify({ type: 'game_start' }));
-                    });
-                    switchTurn();
+                if (players[data.playerId]) {  // Verifica que el objeto del jugador existe
+                    players[data.playerId].board = data.board;
+                    players[data.playerId].ready = true;
+                    // Verificar si todos los jugadores están listos para iniciar el juego
+                    if (Object.keys(players).every(id => players[id].ready)) {
+                        Object.values(players).forEach(player => {
+                            player.socket.send(JSON.stringify({ type: 'game_start' }));
+                        });
+                        switchTurn();  // Iniciar el juego con el primer turno
+                    }
+                } else {
+                    console.error('Player not found:', data.playerId);  // Error si el jugador no existe
                 }
                 return;
-            }
-
+            } 
+    
+            // Evitar procesar acciones si no es el turno del jugador
             if (!currentTurn || currentTurn !== data.playerId) return;
-
-            handleMessageType(data, playerId);
+    
+            // Manejar las acciones del juego según el tipo de mensaje
+            handleGameActions(data, data.playerId);
         } catch (error) {
             console.error("Error processing message:", error);
         }
     });
-
+ 
 
     function createEmptyBoard() {
         return Array(10).fill(null).map(() => Array(10).fill(0));
     }
 
-    function handleMessageType(data, playerId) {
+    function handleGameActions(data, playerId) {
         const opponentId = Object.keys(players).find(id => id !== playerId);
         if (!opponentId) return;
     
@@ -204,5 +208,21 @@ server.on('connection', (socket) => {
     });
 });
     
-    
-      
+function resetGame() {
+    console.log("Resetting game");
+    players = {};
+    numPlayers = 0;
+    currentTurn = null;
+}
+
+function startGame() {
+    Object.values(players).forEach(player => {
+        player.socket.send(JSON.stringify({ type: 'game_start' }));
+    });
+    currentTurn = `player-1`; // Comienza el juego con el primer jugador
+    switchTurn();
+}
+
+function checkAllPlayersReady() {
+    return Object.values(players).every(player => player.ready) && Object.keys(players).length === maxPlayers;
+}
