@@ -115,7 +115,8 @@ function useMine() {
 
 
 socket.addEventListener('open', () => {
-    console.log('Conectado al servidor WebSocket');
+  console.log('Conectado al servidor WebSocket');
+  socket.send(JSON.stringify({ type: 'get_player_id' }));  // Solicitar el ID
 });
 
 socket.addEventListener('message', (event) => {
@@ -123,6 +124,12 @@ socket.addEventListener('message', (event) => {
   console.log('Mensaje recibido del servidor:', data);
 
   switch (data.type) {
+    case 'startGame':
+      totalPlayers = data.playerCount;
+      document.getElementById('turn-info').textContent = `¡El juego ha comenzado! Jugadores conectados: ${totalPlayers}`;
+      startGameLogic();
+      break;
+      
     case 'startGame':
       totalPlayers = data.playerCount;
       document.getElementById('turn-info').textContent = `¡El juego ha comenzado! Jugadores conectados: ${totalPlayers}`;
