@@ -6,6 +6,8 @@ const { handleDefensiveShield } = require('./powerups');  // Asegúrate de impor
 const { handleCruiseMissile } = require('./powerups');  // Asegúrate de importar la función
 
 
+let numPlayers = 0;  // Contador de jugadores conectados
+const maxPlayers = 4;  // Número máximo de jugadores
 
 
 
@@ -105,14 +107,27 @@ function checkIfOpponentSunkAllShips(targetId) {
 
 
 server.on('connection', (socket) => {
-    const playerId = `player-${Date.now()}`;
+    // Paso 2: Comprobar el límite de jugadores
+    if (numPlayers >= maxPlayers) {
+        console.log("Número máximo de jugadores alcanzado.");
+        socket.close(1000, "Número máximo de jugadores alcanzado.");
+        return;
+    }
+
+    // Incrementa el contador de jugadores
+    numPlayers++;
+    const playerId = `player-${numPlayers}`;  // Asigna un ID único basado en el número de jugador
+
+    // Paso 3: Configura el jugador
     players[playerId] = {
-        socket,
-        board: createEmptyBoard(), // Asegúrate de que la función createEmptyBoard() esté definida correctamente.
+        socket: socket,
+        board: createEmptyBoard(), // Asegúrate de que esta función esté definida correctamente
         ready: false
     };
+    console.log(`Nuevo jugador conectado: ${playerId}`);
     socket.send(JSON.stringify({ type: 'welcome', playerId }));
 
+    // Manejo de mensajes del jugador
     socket.on('message', (message) => {
         try {
             const data = JSON.parse(message);
@@ -182,10 +197,9 @@ server.on('connection', (socket) => {
     socket.on('close', () => {
         console.log(`Jugador ${playerId} desconectado`);
         delete players[playerId];
-        if (Object.keys(players).length === 1) {
-            currentTurn = Object.keys(players)[0];
-        } else if (Object.keys(players).length === 0) {
-            currentTurn = null;
+        numPlayers--;  // Decrementa el contador de jugadores al desconectarse
+        if (Object.keys(players).length === 0) {
+            currentTurn = null;  // Resetea el turno si todos los jugadores se han desconectado
         }
     });
 });
