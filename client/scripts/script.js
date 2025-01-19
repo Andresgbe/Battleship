@@ -18,6 +18,40 @@ const shipTypes = [
     { name: "Destructor", size: 2 }
 ];
 
+// Función para crear los tableros de los enemigos
+function createEnemyBoards(playerCount) {
+  const opponentBoardsContainer = document.getElementById('enemy-boards-container');  // Aquí está el cambio
+  opponentBoardsContainer.innerHTML = '';  // Limpiar antes de agregar nuevos tableros
+
+  // Agregar un tablero para cada jugador extra (los enemigos)
+  for (let i = 1; i <= playerCount; i++) {
+      const boardDiv = document.createElement('div');
+      boardDiv.classList.add('opponent-board-container');
+      
+      const title = document.createElement('h4');
+      title.textContent = `Tablero Enemigo ${i}`;
+      boardDiv.appendChild(title);
+
+      const boardElement = document.createElement('div');
+      boardElement.classList.add('board');
+      boardDiv.appendChild(boardElement);
+
+      // Llenar el tablero con las casillas correspondientes
+      for (let row = 0; row < 10; row++) {
+          for (let col = 0; col < 10; col++) {
+              const cell = document.createElement('div');
+              cell.className = 'position';
+              cell.dataset.row = row;
+              cell.dataset.col = col;
+              boardElement.appendChild(cell);
+          }
+      }
+
+      // Agregar el tablero al contenedor
+      opponentBoardsContainer.appendChild(boardDiv);
+  }
+}
+
 function startGame() {
   const selectedPlayerCount = document.getElementById('player-count').value;
   totalPlayers = selectedPlayerCount;
@@ -28,15 +62,32 @@ function startGame() {
     count: totalPlayers,
   }));
 
+  // Crear los tableros de los enemigos (no para el jugador)
+  createEnemyBoards(totalPlayers - 1);  // Total de jugadores - 1 porque el jugador actual no necesita un tablero enemigo
+
   // Ocultar la sección de configuración y mostrar el tablero
   document.getElementById('player-setup').style.display = 'none';
   document.getElementById('turn-info').textContent = 'Esperando que los jugadores se conecten...';
 }
 
+
+document.getElementById('start-game').addEventListener('click', function() {
+  const selectedPlayerCount = parseInt(document.getElementById('player-count').value);
+  totalPlayers = selectedPlayerCount;  // Asegúrate de que se esté actualizando el total de jugadores
+
+  // Llamar a la función para crear los tableros de los enemigos
+  createEnemyBoards(selectedPlayerCount - 1);  // Restamos 1 porque el jugador actual no necesita un tablero enemigo
+
+  // Ahora inicia el juego
+  startGame();
+});
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
   // Inicializar los tableros de los jugadores
   createBoard('player-board', false); // Tablero del jugador
-  createBoard('enemy-board', true);   // Tablero del enemigo
+  createBoard('enemy-boards-container', true); // Tablero del enemigo
 });
 
 function isSubmarineIntact() {
@@ -147,7 +198,7 @@ socket.addEventListener('message', (event) => {
       break;
 
     case 'shoot_response':
-      updateBoard('enemy-board', data.row, data.col, data.result);
+      updateBoard('enemy-boards-container', data.row, data.col, data.result);
       break;
 
     case 'opponent_shot':
@@ -173,7 +224,7 @@ socket.addEventListener('message', (event) => {
 
     case 'sonar_result':
       alert(`Sonar revela: Barco enemigo en [${data.row}, ${data.col}]`);
-      const sonarCell = document.querySelector(`#enemy-board .position[data-row='${data.row}'][data-col='${data.col}']`);
+      const sonarCell = document.querySelector(`#enemy-boards-container .position[data-row='${data.row}'][data-col='${data.col}']`);
       if (sonarCell) {
         sonarCell.style.backgroundColor = 'yellow';  // Resaltar la casilla revelada
       }
@@ -182,7 +233,7 @@ socket.addEventListener('message', (event) => {
     case 'attack_planes_result':
       alert(`Aviones de Ataque: Resultados: ${JSON.stringify(data.missiles)}`);
       data.missiles.forEach(missile => {
-        const missileCell = document.querySelector(`#enemy-board .position[data-row='${missile.row}'][data-col='${missile.col}']`);
+        const missileCell = document.querySelector(`#enemy-boards-container .position[data-row='${missile.row}'][data-col='${missile.col}']`);
         if (missileCell) {
           missileCell.style.backgroundColor = missile.result === 'hit' ? 'red' : 'gray';
         }
@@ -197,7 +248,7 @@ socket.addEventListener('message', (event) => {
     case 'cruise_missile_result':
       alert(`Misil Crucero: Resultados: ${JSON.stringify(data.missiles)}`);
       data.missiles.forEach(missile => {
-        const missileCell = document.querySelector(`#enemy-board .position[data-row='${missile.row}'][data-col='${missile.col}']`);
+        const missileCell = document.querySelector(`#enemy-boards-container .position[data-row='${missile.row}'][data-col='${missile.col}']`);
         if (missileCell) {
           missileCell.style.backgroundColor = missile.result === 'hit' ? 'red' : 'gray';
         }
@@ -316,33 +367,33 @@ document.getElementById('orientation').addEventListener('change', (event) => {
 });
 
 
-
-
 function createBoard(boardId, isEnemy = false) {
   const boardElement = document.getElementById(boardId);
 
   // Verificar si el elemento existe en el DOM
   if (!boardElement) {
-    console.error(`El contenedor con ID '${boardId}' no se encontró en el DOM.`);
-    return; // Salir de la función si el contenedor no existe
+      console.error(`El contenedor con ID '${boardId}' no se encontró en el DOM.`);
+      return; // Salir de la función si el contenedor no existe
   }
 
   for (let i = 0; i < 10; i++) {
-    for (let j = 0; j < 10; j++) {
-      const cell = document.createElement('div');
-      cell.className = 'position';
-      cell.dataset.row = i;
-      cell.dataset.col = j;
+      for (let j = 0; j < 10; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'position';
+          cell.dataset.row = i;
+          cell.dataset.col = j;
 
-      if (!isEnemy) {
-        cell.addEventListener('click', placeShip);
-      } else {
-        cell.addEventListener('click', handleShot);
+          if (!isEnemy) {
+              cell.addEventListener('click', placeShip);  // Agregar evento solo para el jugador
+          } else {
+              cell.addEventListener('click', handleShot);  // Agregar evento solo para disparos
+          }
+
+          boardElement.appendChild(cell);
       }
-      boardElement.appendChild(cell);
-    }
   }
 }
+
 
 
 function placeShip(event) {
@@ -403,7 +454,7 @@ function handleShot(event) {
   const col = parseInt(event.target.dataset.col);
   const shotKey = `${row},${col}`;
 
-  const cell = document.querySelector(`#enemy-board .position[data-row='${row}'][data-col='${col}']`);
+  const cell = document.querySelector(`#enemy-boards-container .position[data-row='${row}'][data-col='${col}']`); // Cambio aquí
 
   // Verifica si la casilla contiene una mina (no debería ser tratada como ya disparada)
   if (cell && cell.getAttribute('data-mine') === 'true') {
@@ -419,6 +470,7 @@ function handleShot(event) {
     socket.send(JSON.stringify({ type: 'shoot', playerId: playerId, row: row, col: col }));
   }
 }
+
 
 function updateBoard(boardId, row, col, result) {
   const cell = document.querySelector(`#${boardId} .position[data-row='${row}'][data-col='${col}']`);

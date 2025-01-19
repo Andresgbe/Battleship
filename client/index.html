@@ -51,23 +51,22 @@
         <button id="use-mine" onclick="useMine()">Usar Mina Marina (5 puntos)</button>
     </div>
     
+
     <div class="game-container">
         <div>
             <h3>Tu Tablero (Coloca tus barcos)</h3>
-            <div class="board" id="player-board"></div> <!-- Asegúrate de que este ID exista -->
+            <div class="board" id="player-board"></div> <!-- Tablero del jugador -->
         </div>
-    
-        <div>
-            <h3>Tablero del Oponente</h3>
-            <div class="board" id="enemy-board"></div> <!-- Asegúrate de que este ID exista -->
-        </div>
-    
-        <div id="opponent-boards">
+        
+        <!-- Este div es para los enemigos, que serán agregados dinámicamente -->
+        <div id="enemy-boards-container" style="display: none;">
             <!-- Los tableros de los oponentes se agregarán aquí dinámicamente -->
         </div>
     </div>
+        
     
 
     <script src="scripts/script.js"></script>
 </body>
 </html>
+
