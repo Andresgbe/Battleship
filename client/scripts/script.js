@@ -8,6 +8,10 @@ let placedShips = new Set(); // Mantiene un registro de los barcos colocados por
 let shotsFired = new Set(); // Registra los disparos realizados para evitar repetir
 let playerPoints = 0; // Declarar la variable de los puntos aquí, al inicio
 
+//new
+let currentPlayer = 0; // Para controlar qué jugador está viendo el tablero
+const totalPlayers = 3; // Número de
+const switchBoardBtn = document.getElementById('switch-board-btn');
 
 const shipTypes = [
     { name: "Portaaviones", size: 5 },
@@ -16,6 +20,22 @@ const shipTypes = [
     { name: "Submarino", size: 3 },
     { name: "Destructor", size: 2 }
 ];
+
+switchBoardBtn.addEventListener('click', () => {
+  currentPlayer = (currentPlayer + 1) % totalPlayers;  // Cambia entre 0, 1 y 2
+  updateBoardVisibility();
+});
+
+//new 
+function updateBoardVisibility() {
+  // Oculta todos los tableros
+  for (let i = 1; i <= totalPlayers; i++) {
+      document.getElementById(`player${i}-board`).style.display = 'none';
+  }
+  // Muestra solo el tablero del jugador actual
+  document.getElementById(`player${currentPlayer + 1}-board`).style.display = 'block';
+}
+
 
 function isSubmarineIntact() {
     // Verificar si el submarino está en el tablero
@@ -94,150 +114,110 @@ function useMine() {
 
 
 socket.addEventListener('open', () => {
-    console.log('Conectado al servidor WebSocket');
+  console.log('Conectado al servidor WebSocket');
 });
 
 socket.addEventListener('message', (event) => {
-    const data = JSON.parse(event.data);
-    console.log('Mensaje recibido del servidor:', data);
-    
-    // Manejo de la bienvenida
-    if (data.type === 'welcome') {
-        playerId = data.playerId;
-        console.log(`Tu ID de jugador es: ${playerId}`);
-    } 
-    // Manejo del inicio del juego
-    else if (data.type === 'game_start') {
-        document.getElementById('turn-info').textContent = "¡El juego ha comenzado!";
-    } 
-    // Manejo del turno
-    else if (data.type === 'turn') {
-        myTurn = data.playerId === playerId;
-        document.getElementById('turn-info').textContent = myTurn ? "Tu turno" : "Turno del oponente";
-    } 
-    // Respuesta del disparo
-    else if (data.type === 'shoot_response') {
-        updateBoard('enemy-board', data.row, data.col, data.result);
-    } 
-    // Respuesta del disparo del oponente
-    else if (data.type === 'opponent_shot') {
-        updateBoard('player-board', data.row, data.col, data.result);
-    }
-    // Manejo del fin del juego
-    else if (data.type === 'game_over') {
-        alert(`¡Juego terminado! El ganador es ${data.winner}`);
-        disableBoard(); // Deshabilitar el tablero para evitar más disparos
-    }
-    // Manejo de la actualización de puntos
-    else if (data.type === 'update_points') {
-        // Actualizamos el puntaje mostrado en la interfaz
-        document.getElementById('player-points').textContent = `Puntos: ${data.points}`;
-        playerPoints = data.points; // Actualizar la variable de puntos
-    }
-    // Manejo del resultado del sonar
-    if (data.type === 'sonar_result') {
-        alert(`Sonar revela: Barco enemigo en [${data.row}, ${data.col}]`);
-        // Aquí puedes agregar lógica para resaltar o marcar la casilla en el tablero del oponente
-        const cell = document.querySelector(`#enemy-board .position[data-row='${data.row}'][data-col='${data.col}']`);
-        if (cell) {
-            cell.style.backgroundColor = 'yellow';  // Resaltar la casilla revelada
-            }
-        }
+  const data = JSON.parse(event.data);
+  console.log('Mensaje recibido del servidor:', data);
 
-        if (data.type === 'attack_planes_result') {
-            alert(`Aviones de Ataque: Resultados: ${JSON.stringify(data.missiles)}`);
-            data.missiles.forEach(missile => {
-                const cell = document.querySelector(`#enemy-board .position[data-row='${missile.row}'][data-col='${missile.col}']`);
-                if (cell) {
-                    if (missile.result === 'hit') {
-                        cell.style.backgroundColor = 'red'; // Resaltar los "hits"
-                    } else {
-                        cell.style.backgroundColor = 'gray'; // Resaltar los "misses"
-                    }
-                }
-            });
-        }      
-        
-            // Manejo de la respuesta del Escudo Defensivo
-    if (data.type === 'defensive_shield') {
-        alert(`Escudo defensivo activado en la región [${data.row}, ${data.col}]`);
-        // Aquí puedes añadir lógica para resaltar la región 3x3 protegida
-    }
+  // Manejo de la bienvenida
+  if (data.type === 'welcome') {
+      playerId = data.playerId;
+      console.log(`Tu ID de jugador es: ${playerId}`);
+  } 
+  // Inicio del juego
+  else if (data.type === 'game_start') {
+      document.getElementById('turn-info').textContent = "¡El juego ha comenzado!";
+  } 
+  // Turno de los jugadores
+  else if (data.type === 'turn') {
+      myTurn = data.playerId === playerId;
+      document.getElementById('turn-info').textContent = myTurn ? "Tu turno" : "Turno del oponente";
+  } 
+  // Respuesta al disparo
+  else if (data.type === 'shoot_response') {
+      updateBoard('enemy-board', data.row, data.col, data.result);
+  } 
+  // Respuesta del disparo del oponente
+  else if (data.type === 'opponent_shot') {
+      updateBoard('player-board', data.row, data.col, data.result);
+  }
+  // Fin del juego
+  else if (data.type === 'game_over') {
+      alert(`¡Juego terminado! El ganador es ${data.winner}`);
+      disableBoard(); // Deshabilitar el tablero para evitar más disparos
+  }
+  // Actualización de puntos
+  else if (data.type === 'update_points') {
+      document.getElementById('player-points').textContent = `Puntos: ${data.points}`;
+      playerPoints = data.points; // Actualizar los puntos
+  }
 
-    if (data.type === 'cruise_missile_result') {
-        alert(`Misil Crucero: Resultados: ${JSON.stringify(data.missiles)}`);
-        data.missiles.forEach(missile => {
-            const cell = document.querySelector(`#enemy-board .position[data-row='${missile.row}'][data-col='${missile.col}']`);
-            if (cell) {
-                if (missile.result === 'hit') {
-                    cell.style.backgroundColor = 'red';  // Resaltar los "hits"
-                } else {
-                    cell.style.backgroundColor = 'gray'; // Resaltar los "misses"
-                }
-            }
-        });
-    }
+  // Resultados del sonar
+  if (data.type === 'sonar_result') {
+      alert(`Sonar revela: Barco enemigo en [${data.row}, ${data.col}]`);
+      const cell = document.querySelector(`#enemy-board .position[data-row='${data.row}'][data-col='${data.col}']`);
+      if (cell) {
+          cell.style.backgroundColor = 'yellow';  // Resaltar la casilla
+      }
+  }
 
-    // Manejo del escudo expirado
-    if (data.type === 'shield_expired') {
-        alert("El escudo defensivo ha expirado.");
-        // Aquí puedes añadir lógica para restaurar el estado de las casillas
-    }
+  // Resultados de los aviones de ataque
+  if (data.type === 'attack_planes_result') {
+      alert(`Aviones de Ataque: Resultados: ${JSON.stringify(data.missiles)}`);
+      data.missiles.forEach(missile => {
+          const cell = document.querySelector(`#enemy-board .position[data-row='${missile.row}'][data-col='${missile.col}']`);
+          if (cell) {
+              cell.style.backgroundColor = missile.result === 'hit' ? 'red' : 'gray'; // Resaltar los "hits" o "misses"
+          }
+      });
+  }
 
-    // Manejo de la respuesta del escudo defensivo del enemigo
-    if (data.type === 'defensive_shield_enemy') {
-        alert(`El enemigo ha activado un escudo defensivo en la región [${data.row}, ${data.col}]`);
-    }
+  // Resultados del misil crucero
+  if (data.type === 'cruise_missile_result') {
+      alert(`Misil Crucero: Resultados: ${JSON.stringify(data.missiles)}`);
+      data.missiles.forEach(missile => {
+          const cell = document.querySelector(`#enemy-board .position[data-row='${missile.row}'][data-col='${missile.col}']`);
+          if (cell) {
+              cell.style.backgroundColor = missile.result === 'hit' ? 'red' : 'gray'; // Resaltar los "hits" o "misses"
+          }
+      });
+  }
 
-    
+  // Expiración del escudo
+  if (data.type === 'shield_expired') {
+      alert("El escudo defensivo ha expirado.");
+  }
 
-        if (data.type === 'mine_planted') {
-            alert(`Mina plantada en [${data.row}, ${data.col}]`);
-            const cell = document.querySelector(`#player-board .position[data-row='${data.row}'][data-col='${data.col}']`);
-            if (cell) {
-                cell.style.backgroundColor = 'purple';  // Resaltar la mina con color
-            }
-        }
-    
-        // Manejo de un golpe a la mina
-        if (data.type === 'mine_hit_success') {
-            alert(`¡La mina explotó en [${data.row}, ${data.col}]!`);
-        }
-    
-        // Manejo de un golpe a la mina enemiga
-        if (data.type === 'mine_hit') {
-            alert(`¡Mina enemiga golpeada en [${data.row}, ${data.col}]!`);
-            const cell = document.querySelector(`#player-board .position[data-row='${data.row}'][data-col='${data.col}']`);
-            if (cell) {
-                cell.style.backgroundColor = 'red';  // Resaltar el golpe adicional
-            }
-        }function handleShot(event) {
-    if (!myTurn) {
-        console.log("No es tu turno.");
-        return;
-    }
-    const row = parseInt(event.target.dataset.row);
-    const col = parseInt(event.target.dataset.col);
-    const shotKey = `${row},${col}`;
+  // Respuesta del escudo defensivo del enemigo
+  if (data.type === 'defensive_shield_enemy') {
+      alert(`El enemigo ha activado un escudo defensivo en la región [${data.row}, ${data.col}]`);
+  }
 
-    // Si es un ataque a una mina, no verificamos si ya se disparó en esa casilla
-    const cell = document.querySelector(`#enemy-board .position[data-row='${row}'][data-col='${col}']`);
-    if (cell && cell.style.backgroundColor === 'purple') {  // Verifica si hay una mina en esa casilla
-        socket.send(JSON.stringify({ type: 'attack_mine', playerId: playerId, row: row, col: col }));
-    } else {
-        // Verificar si la casilla ya ha sido disparada
-        if (shotsFired.has(shotKey)) {
-            console.log("Ya has disparado en esta casilla.");
-            return;
-        }
+  // Mina plantada
+  if (data.type === 'mine_planted') {
+      alert(`Mina plantada en [${data.row}, ${data.col}]`);
+      const cell = document.querySelector(`#player-board .position[data-row='${data.row}'][data-col='${data.col}']`);
+      if (cell) {
+          cell.style.backgroundColor = 'purple';  // Resaltar la mina
+      }
+  }
 
-        shotsFired.add(shotKey);  // Marca esta casilla como disparada
-        socket.send(JSON.stringify({ type: 'shoot', playerId: playerId, row: row, col: col }));
-    }
-}
+  // Golpe a la mina
+  if (data.type === 'mine_hit_success') {
+      alert(`¡La mina explotó en [${data.row}, ${data.col}]!`);
+  }
 
+  // Golpe a la mina enemiga
+  if (data.type === 'mine_hit') {
+      alert(`¡Mina enemiga golpeada en [${data.row}, ${data.col}]!`);
+      const cell = document.querySelector(`#player-board .position[data-row='${data.row}'][data-col='${data.col}']`);
+      if (cell) {
+          cell.style.backgroundColor = 'red';  // Resaltar el golpe
+      }
+  }
 });
-
 
 
 // Función para deshabilitar las interacciones con el tablero
@@ -274,9 +254,54 @@ document.getElementById('orientation').addEventListener('change', (event) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    createBoard('player-board', false);
-    createBoard('enemy-board', true);
+  console.log('DOM completamente cargado');
+  
+  const switchBoardBtn = document.getElementById('switch-board-btn');
+  const playerBoard = document.getElementById('player-board');
+  const enemyBoard = document.getElementById('enemy-board');
+  
+  // Verificar si los elementos existen
+  if (switchBoardBtn) {
+      console.log('Botón de cambio de tablero encontrado');
+  } else {
+      console.log('Botón de cambio de tablero NO encontrado');
+  }
+  
+  if (playerBoard && enemyBoard) {
+      console.log('Tableros encontrados');
+  } else {
+      console.log('Al menos uno de los tableros no está disponible');
+  }
+
+  // Crear tableros si están disponibles
+  if (playerBoard && enemyBoard) {
+      createBoard('player-board', false);
+      createBoard('enemy-board', true);
+  }
+
+  // Añadir listeners si los botones existen
+  if (switchBoardBtn) {
+      switchBoardBtn.addEventListener('click', () => {
+          currentPlayer = (currentPlayer + 1) % totalPlayers;
+          updateBoardVisibility();
+      });
+  } else {
+      console.log('No se pudo agregar el listener al botón de cambio de tablero');
+  }
+
+  // Confirmar el setup de barcos
+  const confirmSetupBtn = document.getElementById('confirm-setup');
+  if (confirmSetupBtn) {
+      confirmSetupBtn.addEventListener('click', () => {
+          socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
+      });
+  } else {
+      console.log('El botón de confirmar setup no está disponible.');
+  }
 });
+
+
+ 
 
 function createBoard(boardId, isEnemy = false) {
     const boardElement = document.getElementById(boardId);
