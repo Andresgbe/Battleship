@@ -7,6 +7,30 @@
     flex-direction: column; /* Hace que los elementos dentro estén en columna */
 }
 
+h1 {
+    font-size: 36px; /* Hacemos el texto más grande */
+    color: #046c69; /* Color del texto */
+    text-align: center; /* Centrado del texto */
+    font-family: 'Arial', sans-serif; /* Establecemos una fuente moderna */
+    margin-top: 30px; /* Espacio superior */
+}
+
+h2 {
+    font-size: 24px; /* Hacemos el texto de los subtítulos más grande */
+    color: #555; /* Color más suave */
+    text-align: center; /* Centrado */
+    font-family: 'Arial', sans-serif; /* Usamos la misma fuente */
+    margin-top: 10px; /* Espacio superior */
+}
+
+#player-points {
+    font-size: 24px; /* Hacemos el texto más grande */
+    color: #046c69; /* Color del texto */
+    text-align: center;
+    font-weight: bold; /* Hacemos el texto en negrita */
+    margin-top: 20px; /* Espacio superior */
+}
+
 /* Estilo para los contenedores de los tableros */
 .boards-container {
     display: flex;
@@ -82,11 +106,27 @@
 /* Alinea los botones de control a la derecha */
 .buttons-right {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
+    flex-wrap: wrap; /* Permite que los botones se acomoden en varias filas */
+    justify-content: center; /* Centra los botones horizontalmente */
+    gap: 10px; /* Espacio entre los botones */
     margin-top: 20px; /* Espacio arriba de los botones */
-    width: 100%;
+    width: 100%; /* Ocupa todo el ancho disponible */
+}
+
+buttons-right button {
+    width: 150px; /* Ajustamos el tamaño de los botones */
+    padding: 12px 0; /* Ajustamos el padding */
+    font-size: 14px;
+    text-align: center;
+    background-color: #046c69;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 15px;
+}
+
+.buttons-right button:hover {
+    background-color: #035a53;
 }
 
 /* Estilo para los botones de control */
