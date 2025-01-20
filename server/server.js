@@ -27,6 +27,20 @@ const shipTypes = [
     { name: "Destructor", size: 2 }
 ];
 
+// new 
+// Server logic remains mostly unchanged. We just ensure the 'opponent_boards' message is sent correctly.
+function sendOpponentBoards() {
+    // Send boards to all players when the game starts
+    Object.values(players).forEach(player => {
+        if (player.socket !== socket) {
+            player.socket.send(JSON.stringify({
+                type: 'opponent_boards',
+                boards: Object.values(players).map(p => p.board),
+            }));
+        }
+    });
+}
+
 
 function createEmptyBoard() {
     return Array(10).fill(null).map(() => Array(10).fill(0));
@@ -120,41 +134,84 @@ server.on('connection', (socket) => {
         ready: false,
         points: 0
     };
-    console.log(`Nuevo jugador conectado: ${playerId}`);
+
     socket.send(JSON.stringify({ type: 'welcome', playerId: playerId }));
 
+    // Si es el jugador 1, permite que seleccione el número de jugadores y se lo envíe a los demás
+    if (playerId === 'player-1') {
+        socket.on('message', (message) => {
+            try {
+                const data = JSON.parse(message);
+
+                if (data.type === 'playerCount') {
+                    const selectedPlayerCount = data.count;
+                    // Enviar la cantidad de jugadores a todos
+                    Object.values(players).forEach(player => {
+                        player.socket.send(JSON.stringify({ type: 'playerCount', count: selectedPlayerCount }));
+                    });
+
+                    // Iniciar el juego solo después de que todos los jugadores estén listos
+                    checkAllPlayersReady(selectedPlayerCount);
+                }
+            } catch (error) {
+                console.error("Error processing player count:", error);
+            }
+        });
+    }   
+ 
     socket.on('message', (message) => {
         try {
             const data = JSON.parse(message);
     
             // Procesar la configuración completa de los barcos
             if (data.type === 'setup_complete') {
-                if (players[data.playerId]) {  // Verifica que el objeto del jugador existe
-                    players[data.playerId].board = data.board;
-                    players[data.playerId].ready = true;
+                // Verifica si el jugador existe en la lista
+                if (players[data.playerId]) {
+                    players[data.playerId].board = data.board;  // Actualiza el tablero del jugador
+                    players[data.playerId].ready = true;  // Marca al jugador como listo
+    
                     // Verificar si todos los jugadores están listos para iniciar el juego
                     if (Object.keys(players).every(id => players[id].ready)) {
+                        // Enviar el número de jugadores y los tableros de todos los jugadores
                         Object.values(players).forEach(player => {
-                            player.socket.send(JSON.stringify({ type: 'game_start' }));
+                            console.log('Enviando tableros de todos los jugadores:', Object.values(players).map(p => p.board));
+                            player.socket.send(JSON.stringify({
+                                type: 'game_start',
+                                playerCount: Object.keys(players).length,
+                                boards: Object.values(players).map(p => p.board)  // Enviar todos los tableros
+                            }));
                         });
-                        switchTurn();  // Iniciar el juego con el primer turno
+    
+                        // Mostrar los tableros de los demás jugadores al jugador actual
+                        Object.values(players).forEach(player => {
+                            if (player.socket !== socket) {
+                                // Llamar a la función para crear los tableros de los enemigos
+                                player.socket.send(JSON.stringify({
+                                    type: 'opponent_boards',
+                                    boards: Object.values(players).map(p => p.board),
+                                }));
+                            }
+                        });
+    
+                        switchTurn(); // Iniciar el juego con el primer turno
                     }
                 } else {
-                    console.error('Player not found:', data.playerId);  // Error si el jugador no existe
+                    console.error('Player not found:', data.playerId); // Error si el jugador no existe
                 }
                 return;
-            } 
+            }
     
             // Evitar procesar acciones si no es el turno del jugador
-            if (!currentTurn || currentTurn !== data.playerId) return;
+            if (currentTurn !== data.playerId) return;
     
             // Manejar las acciones del juego según el tipo de mensaje
             handleGameActions(data, data.playerId);
+    
         } catch (error) {
             console.error("Error processing message:", error);
         }
     });
- 
+    
 
     function createEmptyBoard() {
         return Array(10).fill(null).map(() => Array(10).fill(0));

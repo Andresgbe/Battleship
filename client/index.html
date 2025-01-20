@@ -25,7 +25,7 @@
         <button id="start-game" onclick="startGame()">Iniciar Juego</button>
     </div>
 
-    <div class="controls">
+    <div class="controls" style="display: none;">
         <label for="ship-select">Selecciona un barco:</label>
         <select id="ship-select">
             <option value="5">Portaaviones (5 casillas)</option>
@@ -50,23 +50,44 @@
         <button id="use-defensive-shield" onclick="useDefensiveShield()">Usar Escudo Defensivo (15 puntos)</button>
         <button id="use-mine" onclick="useMine()">Usar Mina Marina (5 puntos)</button>
     </div>
-    
 
+    <!-- Contenedor de Tablero del Jugador -->
     <div class="game-container">
         <div>
             <h3>Tu Tablero (Coloca tus barcos)</h3>
             <div class="board" id="player-board"></div> <!-- Tablero del jugador -->
         </div>
-        
+
         <!-- Este div es para los enemigos, que serán agregados dinámicamente -->
         <div id="enemy-boards-container" style="display: none;">
             <!-- Los tableros de los oponentes se agregarán aquí dinámicamente -->
         </div>
     </div>
         
-    
+    <!-- Botón para cambiar entre el tablero del jugador y los de los oponentes -->
+    <button id="switch-board" style="display: none;">Cambiar Tablero</button>
 
     <script src="scripts/script.js"></script>
+
+    <script>
+        // Asegurarse de que el DOM esté completamente cargado antes de agregar el evento
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostrar el tablero del jugador desde el inicio
+            document.getElementById('player-board').style.display = 'grid'; // Mostrar el tablero
+
+            // Función para iniciar el juego y mostrar el tablero
+            document.getElementById('start-game').addEventListener('click', function() {
+                // Mostrar el contenido del juego y ocultar el mensaje inicial
+                document.getElementById('player-setup').style.display = 'none'; // Ocultar la sección de configuración
+                document.getElementById('player-points').style.display = 'block';
+                document.getElementById('turn-info').style.display = 'block';
+                document.getElementById('switch-board').style.display = 'block'; // Mostrar el botón para cambiar tableros
+                document.getElementById('enemy-boards-container').style.display = 'block'; // Mostrar tableros enemigos
+
+                // Mostrar los controles del juego
+                document.querySelector('.controls').style.display = 'block';
+            });
+        });
+    </script>
 </body>
 </html>
-

@@ -9,6 +9,26 @@ let placedShips = new Set(); // Mantiene un registro de los barcos colocados por
 let shotsFired = new Set(); // Registra los disparos realizados para evitar repetir
 let playerPoints = 0; // Declarar la variable de los puntos aquí, al inicio
 
+// new 
+let currentBoard = 'player'; // Keeps track of the current visible board
+
+// new
+function switchBoard() {
+  if (currentBoard === 'player') {
+      document.getElementById('player-board').style.display = 'none';
+      document.getElementById('enemy-boards-container').style.display = 'block';
+      currentBoard = 'enemy';
+  } else {
+      document.getElementById('enemy-boards-container').style.display = 'none';
+      document.getElementById('player-board').style.display = 'block';
+      currentBoard = 'player';
+  }
+}
+
+//new 
+document.getElementById('switch-board').addEventListener('click', switchBoard);
+
+
 
 const shipTypes = [
     { name: "Portaaviones", size: 5 },
@@ -20,23 +40,21 @@ const shipTypes = [
 
 // Función para crear los tableros de los enemigos
 function createEnemyBoards(playerCount) {
-  const opponentBoardsContainer = document.getElementById('enemy-boards-container');  // Aquí está el cambio
+  console.log('Creando tableros enemigos...');
+  const opponentBoardsContainer = document.getElementById('enemy-boards-container');
   opponentBoardsContainer.innerHTML = '';  // Limpiar antes de agregar nuevos tableros
 
-  // Agregar un tablero para cada jugador extra (los enemigos)
   for (let i = 1; i <= playerCount; i++) {
+      console.log(`Creando tablero enemigo ${i}`); // Verifica cuántos tableros se crean
       const boardDiv = document.createElement('div');
       boardDiv.classList.add('opponent-board-container');
-      
       const title = document.createElement('h4');
       title.textContent = `Tablero Enemigo ${i}`;
       boardDiv.appendChild(title);
-
       const boardElement = document.createElement('div');
       boardElement.classList.add('board');
       boardDiv.appendChild(boardElement);
-
-      // Llenar el tablero con las casillas correspondientes
+      // Agregar celdas al tablero
       for (let row = 0; row < 10; row++) {
           for (let col = 0; col < 10; col++) {
               const cell = document.createElement('div');
@@ -46,49 +64,83 @@ function createEnemyBoards(playerCount) {
               boardElement.appendChild(cell);
           }
       }
-
-      // Agregar el tablero al contenedor
       opponentBoardsContainer.appendChild(boardDiv);
   }
 }
 
+
 function startGame() {
-  const selectedPlayerCount = document.getElementById('player-count').value;
-  totalPlayers = selectedPlayerCount;
+  if (playerId === 'player-1') {
+      const selectedPlayerCount = parseInt(document.getElementById('player-count').value);
+      totalPlayers = selectedPlayerCount;
 
-  // Enviar el número de jugadores al servidor
-  socket.send(JSON.stringify({
-    type: 'playerCount',
-    count: totalPlayers,
-  }));
+      // Enviar el número de jugadores al servidor
+      socket.send(JSON.stringify({
+          type: 'playerCount',
+          count: totalPlayers,
+      }));
 
-  // Crear los tableros de los enemigos (no para el jugador)
-  createEnemyBoards(totalPlayers - 1);  // Total de jugadores - 1 porque el jugador actual no necesita un tablero enemigo
+      // Crear los tableros de los enemigos (no para el jugador)
+      createEnemyBoards(totalPlayers - 1);  // Total de jugadores - 1 porque el jugador actual no necesita un tablero enemigo
 
-  // Ocultar la sección de configuración y mostrar el tablero
-  document.getElementById('player-setup').style.display = 'none';
-  document.getElementById('turn-info').textContent = 'Esperando que los jugadores se conecten...';
+      // Ocultar la sección de configuración y mostrar el tablero
+      document.getElementById('player-setup').style.display = 'none';
+      document.getElementById('turn-info').textContent = 'Esperando que los jugadores se conecten...';
+
+      // Mostrar los tableros de los enemigos
+      const enemyBoardsContainer = document.getElementById('enemy-boards-container');
+      enemyBoardsContainer.style.display = 'block';
+      console.log('Contenedor de tableros de enemigos visible:', enemyBoardsContainer.style.display); // Verificar visibilidad
+  } else {
+      // Si no es el jugador 1, el jugador solo se une sin presionar el botón
+      socket.send(JSON.stringify({
+          type: 'joinGame',
+          playerId: playerId,
+      }));
+  }
 }
 
 
 document.getElementById('start-game').addEventListener('click', function() {
-  const selectedPlayerCount = parseInt(document.getElementById('player-count').value);
-  totalPlayers = selectedPlayerCount;  // Asegúrate de que se esté actualizando el total de jugadores
+  // Solo el jugador 1 puede iniciar el juego
+  if (playerId === 'player-1') {
+      const selectedPlayerCount = parseInt(document.getElementById('player-count').value);
+      totalPlayers = selectedPlayerCount;  // Asegúrate de que se esté actualizando el total de jugadores
 
-  // Llamar a la función para crear los tableros de los enemigos
-  createEnemyBoards(selectedPlayerCount - 1);  // Restamos 1 porque el jugador actual no necesita un tablero enemigo
+      // Enviar el número de jugadores al servidor
+      socket.send(JSON.stringify({
+          type: 'playerCount',
+          count: totalPlayers,
+      }));
 
-  // Ahora inicia el juego
-  startGame();
+      // Llamar a la función para crear los tableros de los enemigos
+      createEnemyBoards(selectedPlayerCount - 1);  // Restamos 1 porque el jugador actual no necesita un tablero enemigo
+
+      // Ocultar la sección de configuración y mostrar el tablero
+      document.getElementById('player-setup').style.display = 'none';
+      document.getElementById('turn-info').textContent = 'Esperando que los jugadores se conecten...';
+
+      // Mostrar los tableros de los enemigos
+      console.log('Contenedor de tableros de enemigos visible: block');
+      document.getElementById('enemy-boards-container').style.display = 'block';
+  } else {
+      // Si no es el jugador 1, deshabilitar el botón o mostrar un mensaje
+      console.log('Solo el jugador 1 puede iniciar el juego');
+  }
 });
 
-
-
+// new
 document.addEventListener('DOMContentLoaded', () => {
-  // Inicializar los tableros de los jugadores
-  createBoard('player-board', false); // Tablero del jugador
-  createBoard('enemy-boards-container', true); // Tablero del enemigo
+  // Inicializar el tablero del jugador (esto ya lo haces en tu código)
+  createBoard('player-board', false); // Este es el tablero del jugador
+
+  // Asegurarse de que los tableros enemigos estén ocultos hasta que el jugador esté listo
+  document.getElementById('enemy-boards-container').style.display = 'none'; // Los tableros enemigos empiezan ocultos
+
+  // Asegurarse de que el botón de cambio de tablero se muestre
+  document.getElementById('switch-board').style.display = 'block';  // Asegúrate de que el botón se muestre cuando se necesite
 });
+
 
 function isSubmarineIntact() {
     // Verificar si el submarino está en el tablero
@@ -178,20 +230,51 @@ socket.addEventListener('message', (event) => {
     case 'welcome':
       playerId = data.playerId; // Asegúrate de que esto se establece correctamente
       console.log(`playerId establecido: ${playerId}`);
-    break;
-
-    case 'startGame':
-      totalPlayers = data.playerCount;
-      document.getElementById('turn-info').textContent = `¡El juego ha comenzado! Jugadores conectados: ${totalPlayers}`;
-      startGameLogic();
       break;
+
+      case 'game_start':
+            totalPlayers = data.playerCount;
+            document.getElementById('turn-info').textContent = `¡El juego ha comenzado! Jugadores conectados: ${totalPlayers}`;
+            
+            // Mostrar los tableros de todos los jugadores
+            data.boards.forEach((board, index) => {
+                if (index !== playerId - 1) {  // Asegúrate de no mostrar el tablero del jugador actual
+                    createOpponentBoard(board, index + 1); // Esta función crea y muestra los tableros enemigos
+                }
+            });
+            break;
+        function startGame() {
+          if (playerId === 'player-1') {
+              const selectedPlayerCount = parseInt(document.getElementById('player-count').value);
+              totalPlayers = selectedPlayerCount;
       
-    case 'startGame':
-      totalPlayers = data.playerCount;
-      document.getElementById('turn-info').textContent = `¡El juego ha comenzado! Jugadores conectados: ${totalPlayers}`;
-      startGameLogic();
-      break;
-
+              // Enviar el número de jugadores al servidor
+              socket.send(JSON.stringify({
+                  type: 'playerCount',
+                  count: totalPlayers,
+              }));
+      
+              // Crear los tableros de los enemigos (no para el jugador)
+              createEnemyBoards(totalPlayers - 1);  // Total de jugadores - 1 porque el jugador actual no necesita un tablero enemigo
+      
+              // Ocultar la sección de configuración y mostrar el tablero
+              document.getElementById('player-setup').style.display = 'none';
+              document.getElementById('turn-info').textContent = 'Esperando que los jugadores se conecten...';
+      
+              // Mostrar los tableros de los enemigos
+              const enemyBoardsContainer = document.getElementById('enemy-boards-container');
+              enemyBoardsContainer.style.display = 'block';
+              console.log('Contenedor de tableros de enemigos visible:', enemyBoardsContainer.style.display); // Verificar visibilidad
+          } else {
+              // Si no es el jugador 1, el jugador solo se une sin presionar el botón
+              socket.send(JSON.stringify({
+                  type: 'joinGame',
+                  playerId: playerId,
+              }));
+          }
+      }
+      
+    
     case 'turn':
       myTurn = data.playerId === playerId;
       document.getElementById('turn-info').textContent = myTurn ? "Tu turno" : "Turno del oponente";
@@ -215,9 +298,7 @@ socket.addEventListener('message', (event) => {
       disableBoard();
       break;
 
-
     case 'update_points':
-      // Actualizamos el puntaje mostrado en la interfaz
       document.getElementById('player-points').textContent = `Puntos: ${data.points}`;
       playerPoints = data.points; // Actualizar la variable de puntos
       break;
@@ -242,7 +323,6 @@ socket.addEventListener('message', (event) => {
 
     case 'defensive_shield':
       alert(`Escudo defensivo activado en la región [${data.row}, ${data.col}]`);
-      // Aquí puedes añadir lógica para resaltar la región 3x3 protegida
       break;
 
     case 'cruise_missile_result':
@@ -257,7 +337,6 @@ socket.addEventListener('message', (event) => {
 
     case 'shield_expired':
       alert("El escudo defensivo ha expirado.");
-      // Aquí puedes añadir lógica para restaurar el estado de las casillas
       break;
 
     case 'defensive_shield_enemy':
@@ -287,9 +366,39 @@ socket.addEventListener('message', (event) => {
     default:
       console.log(`Tipo de mensaje no reconocido: ${data.type}`);
       break;
-      
   }
 });
+
+function createOpponentBoard(board, playerId) {
+  const opponentBoardsContainer = document.getElementById('enemy-boards-container');
+  const boardDiv = document.createElement('div');
+  boardDiv.classList.add('opponent-board-container');
+  
+  const title = document.createElement('h4');
+  title.textContent = `Tablero Enemigo ${playerId}`;
+  boardDiv.appendChild(title);
+
+  const boardElement = document.createElement('div');
+  boardElement.classList.add('board');
+  boardDiv.appendChild(boardElement);
+
+  // Llenar el tablero con las casillas correspondientes
+  for (let row = 0; row < 10; row++) {
+      for (let col = 0; col < 10; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'position';
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+          if (board[row][col] === 1) {  // Muestra los barcos en azul
+              cell.style.backgroundColor = 'blue';
+          }
+          boardElement.appendChild(cell);
+      }
+  }
+
+  opponentBoardsContainer.appendChild(boardDiv);
+}
+
 
 // Función para crear y mostrar todos los tableros de los jugadores (incluyendo el propio)
 function displayOpponentBoards() {
@@ -340,12 +449,13 @@ function disableBoard() {
 }
 
 document.getElementById('confirm-setup').addEventListener('click', () => {
-  if (playerId) { // Asegurarse de que playerId no es null
+  if (playerId) {
       socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
   } else {
       console.error('playerId no ha sido definido');
   }
 });
+
 
 document.getElementById('ship-select').addEventListener('change', (event) => {
     const selectedShipName = event.target.options[event.target.selectedIndex].text.split(" ")[0]; 
