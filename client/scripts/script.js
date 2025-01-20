@@ -1,7 +1,6 @@
 const socket = new WebSocket('ws://localhost:8080');
 let playerId = null;
 let myTurn = false;
-let totalPlayers = 0;
 let board = Array(10).fill(null).map(() => Array(10).fill(0));
 let selectedShip = { name: "Portaaviones", size: 5 };
 let selectedOrientation = 'H';
@@ -11,6 +10,9 @@ let playerPoints = 0; // Declarar la variable de los puntos aquí, al inicio
 
 // new 
 let currentBoard = 'player'; // Keeps track of the current visible board
+let currentPlayerBoard = 0; // Índice para cambiar entre los tableros
+let playerBoards = []; // Para almacenar los tableros de los jugadores
+let totalPlayers = 2;
 
 // new
 function switchBoard() {
@@ -24,11 +26,6 @@ function switchBoard() {
       currentBoard = 'player';
   }
 }
-
-//new 
-document.getElementById('switch-board').addEventListener('click', switchBoard);
-
-
 
 const shipTypes = [
     { name: "Portaaviones", size: 5 },
@@ -68,7 +65,6 @@ function createEnemyBoards(playerCount) {
   }
 }
 
-
 function startGame() {
   if (playerId === 'player-1') {
       const selectedPlayerCount = parseInt(document.getElementById('player-count').value);
@@ -100,7 +96,6 @@ function startGame() {
   }
 }
 
-
 document.getElementById('start-game').addEventListener('click', function() {
   // Solo el jugador 1 puede iniciar el juego
   if (playerId === 'player-1') {
@@ -130,15 +125,35 @@ document.getElementById('start-game').addEventListener('click', function() {
 });
 
 // new
-document.addEventListener('DOMContentLoaded', () => {
-  // Inicializar el tablero del jugador (esto ya lo haces en tu código)
-  createBoard('player-board', false); // Este es el tablero del jugador
+document.addEventListener('DOMContentLoaded', function() {
+  // Asegúrate de que los elementos existen antes de agregar los event listeners
+  const startButton = document.getElementById('start-game');
+  const switchBoardButton = document.getElementById('switch-board');
 
-  // Asegurarse de que los tableros enemigos estén ocultos hasta que el jugador esté listo
-  document.getElementById('enemy-boards-container').style.display = 'none'; // Los tableros enemigos empiezan ocultos
+  if (startButton) {
+      startButton.addEventListener('click', function() {
+          // Mostrar el contenido del juego y ocultar el mensaje inicial
+          document.getElementById('player-setup').style.display = 'none'; // Ocultar la sección de configuración
+          document.getElementById('player-points').style.display = 'block';
+          document.getElementById('turn-info').style.display = 'block';
+          document.getElementById('switch-board').style.display = 'block'; // Mostrar el botón para cambiar tableros
+          document.getElementById('enemy-boards-container').style.display = 'block'; // Mostrar los tableros enemigos
 
-  // Asegurarse de que el botón de cambio de tablero se muestre
-  document.getElementById('switch-board').style.display = 'block';  // Asegúrate de que el botón se muestre cuando se necesite
+          // Crear los tableros de los oponentes según el número de jugadores
+          createOpponentBoards(totalPlayers);
+
+          // Mostrar los controles del juego
+          document.querySelector('.controls').style.display = 'block';
+      });
+  }
+
+  if (switchBoardButton) {
+      switchBoardButton.addEventListener('click', function() {
+          // Cambiar al siguiente tablero
+          currentPlayerBoard = (currentPlayerBoard + 1) % totalPlayers;
+          updateBoardView();
+      });
+  }
 });
 
 
@@ -162,7 +177,6 @@ function isSubmarinePosition(row, col) {
     // Esto puede incluir verificar el tamaño del barco y la orientación.
     return shipTypes.some(ship => ship.name === 'Submarino');
 }
-
 
 function useSonar() {
     if (myTurn && playerPoints >= 5) {
@@ -206,7 +220,6 @@ function useDefensiveShield() {
     }
 }
 
-
 function useMine() {
     if (myTurn && playerPoints >= 5) {
         // Enviar al servidor para plantar la mina
@@ -215,7 +228,6 @@ function useMine() {
         alert("No tienes suficientes puntos o no es tu turno.");
     }
 }
-
 
 socket.addEventListener('open', () => {
   console.log('Conectado al servidor WebSocket');
@@ -232,7 +244,7 @@ socket.addEventListener('message', (event) => {
       console.log(`playerId establecido: ${playerId}`);
       break;
 
-      case 'game_start':
+    case 'game_start':
             totalPlayers = data.playerCount;
             document.getElementById('turn-info').textContent = `¡El juego ha comenzado! Jugadores conectados: ${totalPlayers}`;
             
@@ -273,8 +285,7 @@ socket.addEventListener('message', (event) => {
               }));
           }
       }
-      
-    
+
     case 'turn':
       myTurn = data.playerId === playerId;
       document.getElementById('turn-info').textContent = myTurn ? "Tu turno" : "Turno del oponente";
@@ -369,38 +380,50 @@ socket.addEventListener('message', (event) => {
   }
 });
 
-function createOpponentBoard(board, playerId) {
-  const opponentBoardsContainer = document.getElementById('enemy-boards-container');
-  const boardDiv = document.createElement('div');
-  boardDiv.classList.add('opponent-board-container');
-  
-  const title = document.createElement('h4');
-  title.textContent = `Tablero Enemigo ${playerId}`;
-  boardDiv.appendChild(title);
+function createOpponentBoards(playerCount) {
+  // Limpiar los tableros de oponentes antes de crear nuevos
+  const container = document.getElementById('enemy-boards-container');
+  container.innerHTML = ''; // Limpiar contenido previo
 
-  const boardElement = document.createElement('div');
-  boardElement.classList.add('board');
-  boardDiv.appendChild(boardElement);
-
-  // Llenar el tablero con las casillas correspondientes
-  for (let row = 0; row < 10; row++) {
-      for (let col = 0; col < 10; col++) {
-          const cell = document.createElement('div');
-          cell.className = 'position';
-          cell.dataset.row = row;
-          cell.dataset.col = col;
-          if (board[row][col] === 1) {  // Muestra los barcos en azul
-              cell.style.backgroundColor = 'blue';
-          }
-          boardElement.appendChild(cell);
+  for (let i = 1; i <= playerCount; i++) {
+      if (i === 1) {
+          // Solo mostrar el tablero del jugador actual
+          continue;
       }
-  }
 
-  opponentBoardsContainer.appendChild(boardDiv);
+      // Crear tablero para el oponente
+      const boardDiv = document.createElement('div');
+      boardDiv.classList.add('opponent-board-container');
+      const boardElement = document.createElement('div');
+      boardElement.classList.add('board');
+      boardElement.id = `opponent-board-${i}`;
+
+      // Llenar el tablero con casillas
+      for (let row = 0; row < 10; row++) {
+          for (let col = 0; col < 10; col++) {
+              const cell = document.createElement('div');
+              cell.className = 'position';
+              boardElement.appendChild(cell);
+          }
+      }
+
+      boardDiv.appendChild(boardElement);
+      container.appendChild(boardDiv);
+
+      // Almacenar el tablero para luego acceder a él
+      playerBoards.push(boardElement);
+  }
 }
 
+// new
+document.getElementById('switch-board').addEventListener('click', function() {
+  currentPlayerBoard = (currentPlayerBoard + 1) % totalPlayers; // Cambiar al siguiente tablero
+  updateBoardView();
+});
 
-// Función para crear y mostrar todos los tableros de los jugadores (incluyendo el propio)
+
+
+
 function displayOpponentBoards() {
   const opponentBoardsContainer = document.getElementById('opponent-boards');
   opponentBoardsContainer.innerHTML = ''; // Limpiar el contenedor de tableros de oponentes
@@ -437,6 +460,7 @@ function displayOpponentBoards() {
     }
   });
 }
+
 
 // Función para deshabilitar las interacciones con el tablero
 function disableBoard() {
@@ -482,27 +506,30 @@ function createBoard(boardId, isEnemy = false) {
 
   // Verificar si el elemento existe en el DOM
   if (!boardElement) {
-      console.error(`El contenedor con ID '${boardId}' no se encontró en el DOM.`);
-      return; // Salir de la función si el contenedor no existe
+    console.error(`El contenedor con ID '${boardId}' no se encontró en el DOM.`);
+    return; // Salir de la función si el contenedor no existe
   }
 
+  // Crear las celdas del tablero dinámicamente
   for (let i = 0; i < 10; i++) {
-      for (let j = 0; j < 10; j++) {
-          const cell = document.createElement('div');
-          cell.className = 'position';
-          cell.dataset.row = i;
-          cell.dataset.col = j;
+    for (let j = 0; j < 10; j++) {
+      const cell = document.createElement('div');
+      cell.className = 'position';
+      cell.dataset.row = i;
+      cell.dataset.col = j;
 
-          if (!isEnemy) {
-              cell.addEventListener('click', placeShip);  // Agregar evento solo para el jugador
-          } else {
-              cell.addEventListener('click', handleShot);  // Agregar evento solo para disparos
-          }
-
-          boardElement.appendChild(cell);
+      // Agregar el evento para colocar barcos o disparar dependiendo si es un tablero enemigo
+      if (!isEnemy) {
+        cell.addEventListener('click', placeShip);  // Agregar evento solo para el jugador
+      } else {
+        cell.addEventListener('click', handleShot);  // Agregar evento solo para disparos
       }
+
+      boardElement.appendChild(cell);
+    }
   }
 }
+
 
 
 
@@ -543,15 +570,15 @@ function canPlaceShip(row, col) {
 
 function renderBoard() {
   const playerBoard = document.getElementById('player-board');
-  playerBoard.innerHTML = '';
-  createBoard('player-board', false);
+  playerBoard.innerHTML = ''; // Limpiar el tablero antes de regenerarlo
+  createBoard('player-board', false); // Llamar a createBoard para regenerar las celdas
   for (let i = 0; i < 10; i++) {
-    for (let j = 0; j < 10; j++) {
-      if (board[i][j] === 1) {
-        const cell = document.querySelector(`#player-board .position[data-row='${i}'][data-col='${j}']`);
-        cell.style.backgroundColor = 'blue';
+      for (let j = 0; j < 10; j++) {
+          if (board[i][j] === 1) { // Si la casilla tiene un barco
+              const cell = document.querySelector(`#player-board .position[data-row='${i}'][data-col='${j}']`);
+              cell.style.backgroundColor = 'blue'; // Establecer el color para los barcos
+          }
       }
-    }
   }
 }
 

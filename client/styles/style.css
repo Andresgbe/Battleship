@@ -16,22 +16,22 @@
     background-color: lightblue;
     border: 2px solid black;
   }
-
-
-.position {
-  width: 40px;
-  height: 40px;
-  background-color: #046c69;
-  border: 1px solid black;
-  text-align: center;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.position.ship {
+  
+  .position {
+    width: 40px;
+    height: 40px;
+    background-color: #046c69;
+    border: 1px solid black;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .position.ship {
     background-color: blue !important;
-}
+  }
+  
 
 
 .orientation {
@@ -75,3 +75,5 @@
   .opponent-board-container {
     margin: 10px;
   }
+
+  
