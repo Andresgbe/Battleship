@@ -14,9 +14,8 @@ const server = new WebSocket.Server({ port: PORT });
 
 console.log(`Servidor WebSocket escuchando en el puerto ${PORT}`);
 
-//new
-let currentTurn = 0;
-const players = [];
+const players = {};
+let currentTurn = null;
 
 const shipTypes = [
     { name: "Portaaviones", size: 5 },
@@ -33,31 +32,31 @@ const createEmptyBoard = () => {
 
 
 const initializePlayer = (playerId, socket) => {
-    players.push({
-        playerId,
+    players[playerId] = {
         socket,
         board: createEmptyBoard(),
-        ready: false,
-        points: 0,  // Puntos por cada jugador
-    });
-    // Si ya hay 3 jugadores, comenzamos el juego
-    if (players.length === 3) {
-        players.forEach(player => {
-            player.socket.send(JSON.stringify({ type: 'game_start' }));
-        });
-        switchTurn();  // Empieza el turno del primer jugador
+        shipsRemaining: shipTypes.length,
+        ready: false
+    };
+
+    if (!currentTurn) {
+        currentTurn = playerId; 
     }
 };
 
+
 const switchTurn = () => {
-    currentTurn = (currentTurn + 1) % 3;  // Alterna entre 0, 1 y 2 (3 jugadores)
-    players.forEach((player, index) => {
-        player.socket.send(JSON.stringify({
-            type: 'turn',
-            playerId: players[currentTurn].playerId,
-            opponentIds: players.filter((_, i) => i !== currentTurn).map(p => p.playerId),
-        }));
-    });
+    const playerIds = Object.keys(players);
+    if (playerIds.length === 2) {
+        if (players[playerIds[0]].shipsRemaining === 0 || players[playerIds[1]].shipsRemaining === 0) {
+            // Si el juego terminó, no cambiar el turno
+            return;
+        }
+        currentTurn = playerIds.find(id => id !== currentTurn);
+        playerIds.forEach(id => {
+            players[id].socket.send(JSON.stringify({ type: 'turn', playerId: currentTurn }));
+        });
+    }
 };
 
 /*

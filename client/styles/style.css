@@ -1,12 +1,23 @@
-.game-container {
+/* Contenedor para los tableros y los controles */
+.game-wrapper {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    justify-content: space-between;
     width: 100%;
 }
 
+/* Estilo para los contenedores de los tableros */
+.boards-container {
+    display: flex;
+    justify-content: space-between;
+    width: 70%; /* Ajustar para que ocupe un espacio más pequeño */
+}
+
+/* Contenedor de cada tablero */
+.board-container {
+    margin-right: 20px;
+}
+
+/* Estilos para los tableros */
 .board {
     display: grid;
     grid-template-columns: repeat(10, 40px);
@@ -16,6 +27,8 @@
     background-color: lightblue;
     border: 2px solid black;
 }
+
+/* Estilo para las posiciones de los tableros */
 .position {
     width: 40px;
     height: 40px;
@@ -31,34 +44,41 @@
     background-color: blue !important;
 }
 
+/* Alinea los botones de control a la derecha */
+.buttons-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-left: 20px;
+    width: 30%;
+}
 
-.orientation {
+/* Estilo para los botones de control */
+.buttons-right button, .buttons-right select {
+    margin-bottom: 10px;
     padding: 10px;
-    margin: 5px;
+    background-color: #046c69;
+    color: white;
     border: none;
     cursor: pointer;
+    width: 200px; /* Tamaño de los botones */
+    text-align: center;
 }
 
-.orientation.active {
-    background-color: red;
-    color: white;
+.buttons-right button:hover {
+    background-color: #035a53;
 }
 
-.ship-button {
-    padding: 10px;
-    margin: 5px;
-    border: none;
-    cursor: pointer;
+/* Estilos para el selector de barco y orientación */
+#ship-select, #orientation {
+    width: 100%;
+    margin-bottom: 10px;
 }
 
-.ship-button.selected {
-    background-color: green;
-    color: white;
-}
-
-#player-points {
-    font-size: 20px;
-    margin: 10px 0;
-    color: #333;
-    font-weight: bold;
+/* Estilo para el contenedor de controles */
+.controls {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
 }
