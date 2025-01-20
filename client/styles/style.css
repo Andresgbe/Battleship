@@ -1,15 +1,16 @@
 /* Contenedor para los tableros y los controles */
 .game-wrapper {
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Centra el contenido horizontalmente */
     width: 100%;
+    align-items: center; /* Alinea los elementos al centro verticalmente */
 }
 
 /* Estilo para los contenedores de los tableros */
 .boards-container {
     display: flex;
     justify-content: space-between;
-    width: 70%; /* Ajustar para que ocupe un espacio más pequeño */
+    width: 80%; /* Hace que los tableros ocupen un espacio mayor */
 }
 
 /* Contenedor de cada tablero */
@@ -20,18 +21,18 @@
 /* Estilos para los tableros */
 .board {
     display: grid;
-    grid-template-columns: repeat(10, 40px);
-    grid-template-rows: repeat(10, 40px);
+    grid-template-columns: repeat(10, 60px); /* Aumenta el tamaño de las casillas */
+    grid-template-rows: repeat(10, 60px); /* Aumenta el tamaño de las casillas */
     gap: 0;
     margin: 10px auto;
     background-color: lightblue;
-    border: 2px solid black;
+    border: 3px solid black; /* Cambié el grosor del borde */
 }
 
 /* Estilo para las posiciones de los tableros */
 .position {
-    width: 40px;
-    height: 40px;
+    width: 60px; /* Aumenta el tamaño de las casillas */
+    height: 60px; /* Aumenta el tamaño de las casillas */
     background-color: #046c69;
     border: 1px solid black;
     text-align: center;
@@ -76,9 +77,18 @@
     margin-bottom: 10px;
 }
 
-/* Estilo para el contenedor de controles */
+/* Estilo para el contenedor de controles debajo del primer tablero */
 .controls {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
+    margin-top: 20px;
+}
+
+/* Ajustes de los botones en la misma altura que el tablero */
+.buttons-right {
+    align-items: flex-start;
+    margin-top: 0;
+    margin-left: 20px;
 }
