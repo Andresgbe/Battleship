@@ -4,18 +4,21 @@
     justify-content: center; /* Centra el contenido horizontalmente */
     width: 100%;
     align-items: center; /* Alinea los elementos al centro verticalmente */
+    flex-direction: column; /* Hace que los elementos dentro estén en columna */
 }
 
 /* Estilo para los contenedores de los tableros */
 .boards-container {
     display: flex;
-    justify-content: space-between;
-    width: 80%; /* Hace que los tableros ocupen un espacio mayor */
+    flex-direction: column; /* Coloca los tableros uno encima del otro */
+    align-items: center; /* Centra los tableros */
+    width: 100%; /* Se asegura de que ocupen el 100% del ancho */
 }
 
 /* Contenedor de cada tablero */
 .board-container {
-    margin-right: 20px;
+    margin-bottom: 20px; /* Añade un pequeño margen entre los tableros */
+    text-align: center;
 }
 
 /* Estilos para los tableros */
@@ -50,9 +53,9 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    align-items: flex-start;
-    margin-left: 20px;
-    width: 30%;
+    align-items: center;
+    margin-top: 20px; /* Espacio arriba de los botones */
+    width: 100%;
 }
 
 /* Estilo para los botones de control */
@@ -86,9 +89,16 @@
     margin-top: 20px;
 }
 
-/* Ajustes de los botones en la misma altura que el tablero */
-.buttons-right {
-    align-items: flex-start;
-    margin-top: 0;
-    margin-left: 20px;
+/* Ajuste del título "Tu Tablero" */
+#tu-tablero {
+    text-align: center; /* Centra el título */
+    font-size: 24px; /* Ajusta el tamaño del título */
+    margin-bottom: 20px; /* Espacio debajo del título */
 }
+
+/* Asegurando que los tableros ocupen el centro completo */
+.boards-container {
+    width: 70%; /* Hace que el contenedor de los tableros ocupe un 70% del ancho */
+    margin: 0 auto; /* Centra el contenedor */
+}
+
