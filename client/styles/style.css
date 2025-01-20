@@ -24,11 +24,19 @@ h2 {
 }
 
 #player-points {
-    font-size: 24px; /* Hacemos el texto más grande */
+    font-size: 33px; /* Hacemos el texto más grande */
     color: #046c69; /* Color del texto */
     text-align: center;
     font-weight: bold; /* Hacemos el texto en negrita */
     margin-top: 20px; /* Espacio superior */
+}
+
+#turn-info {
+    font-size: 18px; /* Hacemos el texto más grande */
+    color: #777; /* Un color gris suave */
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    margin-top: 10px; /* Espacio superior */
 }
 
 /* Estilo para los contenedores de los tableros */

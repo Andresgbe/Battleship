@@ -10,8 +10,6 @@
 
     <h1>¡Bienvenido a Batalla Naval!</h1>
 
-    <div id="player-points">Puntos: 0</div>
-
     <h2 id="turn-info">Esperando jugadores...</h2>
 
     <div class="game-wrapper">
@@ -23,7 +21,7 @@
 
                 <!-- Botones debajo del primer tablero -->
                 <div class="controls">
-                    <button id="confirm-setup">Confirmar Barcos</button>
+                    <button id="confirm-setup"><h4>Confirmar Barcos</h4></button>
                     <label for="ship-select">Selecciona un barco:</label>
                     <select id="ship-select">
                         <option value="5">Portaaviones (5 casillas)</option>
@@ -48,6 +46,7 @@
         </div>
 
         <!-- Botones de power-ups debajo del tablero del oponente -->
+        <div id="player-points">Puntos: 0</div>
         <div class="buttons-right">
             <button id="use-sonar" onclick="useSonar()">Usar Sonar (5 puntos)</button>
             <button id="use-attack-planes" onclick="useAttackPlanes()">Usar Aviones de Ataque (10 puntos)</button>
