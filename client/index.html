@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es-VE">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,20 +7,38 @@
     <link rel="stylesheet" href="styles/style.css">
 </head>
 <body>
+
     <h1>¡Bienvenido a Batalla Naval!</h1>
 
-    <!-- Sección de puntos, colocada debajo del título -->
-    <div id="player-points">Puntos: 0</div> <!-- Mostrará los puntos acumulados -->
+    <div id="player-points">Puntos: 0</div>
 
     <h2 id="turn-info">Esperando jugadores...</h2>
 
-    <!-- Contenedor para el tablero y los controles -->
     <div class="game-wrapper">
-        <!-- Tableros y controles alineados horizontalmente -->
+        <!-- Contenedor de los tableros -->
         <div class="boards-container">
             <div class="board-container">
                 <h3>Tu Tablero (Coloca tus barcos)</h3>
                 <div class="board" id="player-board"></div>
+
+                <!-- Botones debajo del primer tablero -->
+                <div class="controls">
+                    <button id="confirm-setup">Confirmar Barcos</button>
+                    <label for="ship-select">Selecciona un barco:</label>
+                    <select id="ship-select">
+                        <option value="5">Portaaviones (5 casillas)</option>
+                        <option value="4">Acorazado (4 casillas)</option>
+                        <option value="3">Crucero (3 casillas)</option>
+                        <option value="3">Submarino (3 casillas)</option>
+                        <option value="2">Destructor (2 casillas)</option>
+                    </select>
+
+                    <label for="orientation">Orientación:</label>
+                    <select id="orientation">
+                        <option value="H">Horizontal</option>
+                        <option value="V">Vertical</option>
+                    </select>
+                </div>
             </div>
 
             <div class="board-container">
@@ -29,29 +47,8 @@
             </div>
         </div>
 
-        <!-- Controles al lado de los tableros -->
+        <!-- Botones de power-ups debajo del tablero del oponente -->
         <div class="buttons-right">
-            <div class="controls">
-                <!-- Botón para confirmar la colocación de barcos -->
-                <button id="confirm-setup">Confirmar Barcos</button>
-            </div>
-
-            <label for="ship-select">Selecciona un barco:</label>
-            <select id="ship-select">
-                <option value="5">Portaaviones (5 casillas)</option>
-                <option value="4">Acorazado (4 casillas)</option>
-                <option value="3">Crucero (3 casillas)</option>
-                <option value="3">Submarino (3 casillas)</option>
-                <option value="2">Destructor (2 casillas)</option>
-            </select>
-
-            <label for="orientation">Orientación:</label>
-            <select id="orientation">
-                <option value="H">Horizontal</option>
-                <option value="V">Vertical</option>
-            </select>
-
-            <!-- Botones de power-ups -->
             <button id="use-sonar" onclick="useSonar()">Usar Sonar (5 puntos)</button>
             <button id="use-attack-planes" onclick="useAttackPlanes()">Usar Aviones de Ataque (10 puntos)</button>
             <button id="use-cruise-missile" onclick="useCruiseMissile()">Usar Misil Crucero (15 puntos)</button>
