@@ -5,17 +5,26 @@ const { handlePlantMine, handleMineHit } = require('./powerups');  // Asegúrate
 const { handleDefensiveShield } = require('./powerups');  // Asegúrate de importar correctamente
 const { handleCruiseMissile } = require('./powerups');  // Asegúrate de importar la función
 
+//////////////
+const express = require('express');
+const path = require('path'); // Para manejar rutas de archivos
 
-
-
+const app = express();
+app.use(express.static(path.join(__dirname, 'clientes')));
+///////////////
 
 const PORT = 8080;
-const server = new WebSocket.Server({ port: PORT });
+const server = new WebSocket.Server({ noServer: true });
 
 console.log(`Servidor WebSocket escuchando en el puerto ${PORT}`);
 
 const players = {};
 let currentTurn = null;
+
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'clientes', 'index.html')); // Puedes personalizar la ruta aquí
+});
 
 const shipTypes = [
     { name: "Portaaviones", size: 5 },
@@ -192,6 +201,16 @@ server.on('connection', (socket) => {
         } catch (error) {
             console.error("Error procesando el mensaje:", error);
         }
+    });
+
+    const httpServer = app.listen(PORT, () => {
+        console.log(`Servidor HTTP corriendo en puerto ${PORT}`);
+    });
+
+    httpServer.on('upgrade', (request, socket, head) => {
+        server.handleUpgrade(request, socket, head, (socket) => {
+            server.emit('connection', socket, request);
+        });
     });
 
     socket.on('close', () => {

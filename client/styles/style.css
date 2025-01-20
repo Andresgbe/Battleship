@@ -23,6 +23,15 @@ h2 {
     margin-top: 10px; /* Espacio superior */
 }
 
+#namex {
+    color: #046c69; 
+    font-size: 20px; 
+    color: #e66611; /* Color del texto */
+    text-align: center; /* Centrado del texto */
+    font-family: 'Arial', sans-serif; /* Establecemos una fuente moderna */
+    margin-top: 30px; /* Espacio superior */
+}
+
 #player-points {
     font-size: 33px; /* Hacemos el texto más grande */
     color: #046c69; /* Color del texto */

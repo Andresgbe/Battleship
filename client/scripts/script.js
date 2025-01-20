@@ -214,7 +214,7 @@ socket.addEventListener('message', (event) => {
             }
         }function handleShot(event) {
     if (!myTurn) {
-        console.log("No es tu turno.");
+        alert(`No es tu turno.`);
         return;
     }
     const row = parseInt(event.target.dataset.row);
@@ -348,7 +348,7 @@ function renderBoard() {
 
 function handleShot(event) {
     if (!myTurn) {
-        console.log("No es tu turno.");
+        alert(`No es tu turno.`);
         return;
     }
     const row = parseInt(event.target.dataset.row);
