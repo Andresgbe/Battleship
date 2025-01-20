@@ -1,4 +1,3 @@
-// Función para manejar el uso del sonar
 const handleSonarUse = (playerId, players) => {
     const player = players[playerId];
     const opponentId = Object.keys(players).find(id => id !== playerId);

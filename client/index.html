@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,17 +13,6 @@
     <div id="player-points">Puntos: 0</div> <!-- Mostrará los puntos acumulados -->
 
     <h2 id="turn-info">Esperando jugadores...</h2>
-
-    <!-- Menú de selección de número de jugadores -->
-    <div id="player-setup">
-        <label for="player-count">Selecciona cuántos jugadores jugarán:</label>
-        <select id="player-count">
-            <option value="2">2 Jugadores</option>
-            <option value="3">3 Jugadores</option>
-            <option value="4">4 Jugadores</option>
-        </select>
-        <button id="start-game" onclick="startGame()">Iniciar Juego</button>
-    </div>
 
     <div class="controls">
         <label for="ship-select">Selecciona un barco:</label>
@@ -43,28 +32,33 @@
     
         <button id="confirm-setup">Confirmar Barcos</button>
 
-        <!-- Botones de power-ups -->
+        <!-- Botón para usar Sonar -->
         <button id="use-sonar" onclick="useSonar()">Usar Sonar (5 puntos)</button>
         <button id="use-attack-planes" onclick="useAttackPlanes()">Usar Aviones de Ataque (10 puntos)</button>
-        <button id="use-cruise-missile" onclick="useCruiseMissile()">Usar Misil Crucero (15 puntos)</button>
-        <button id="use-defensive-shield" onclick="useDefensiveShield()">Usar Escudo Defensivo (15 puntos)</button>
-        <button id="use-mine" onclick="useMine()">Usar Mina Marina (5 puntos)</button>
+        <!-- Botón para usar el Misil Crucero -->
+<button id="use-cruise-missile" onclick="useCruiseMissile()">Usar Misil Crucero (15 puntos)</button>
+
+
+        <!-- Botón para usar el Escudo Defensivo -->
+<button id="use-defensive-shield" onclick="useDefensiveShield()">Usar Escudo Defensivo (15 puntos)</button>
+
+
+        <!-- Botón para usar la Mina Marina -->
+<button id="use-mine" onclick="useMine()">Usar Mina Marina (5 puntos)</button>
+
     </div>
     
-
     <div class="game-container">
         <div>
             <h3>Tu Tablero (Coloca tus barcos)</h3>
-            <div class="board" id="player-board"></div> <!-- Tablero del jugador -->
+            <div class="board" id="player-board"></div>
         </div>
-        
-        <!-- Este div es para los enemigos, que serán agregados dinámicamente -->
-        <div id="enemy-boards-container" style="display: none;">
-            <!-- Los tableros de los oponentes se agregarán aquí dinámicamente -->
+
+        <div>
+            <h3>Tablero del Oponente</h3>
+            <div class="board" id="enemy-board"></div>
         </div>
     </div>
-        
-    <button id="switch-board" style="display: none;">Cambiar Tablero</button> <!-- Botón para cambiar entre tableros -->
 
     <script src="scripts/script.js"></script>
 </body>
