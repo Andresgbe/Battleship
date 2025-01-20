@@ -1,3 +1,7 @@
+const EMPCooldown = 10;  // Tiempo de recarga en turnos
+let EMPActive = false;   // Si el EMP está activado o no
+let EMPTurnsLeft = 0;  
+
 const handleSonarUse = (playerId, players) => {
     const player = players[playerId];
     const opponentId = Object.keys(players).find(id => id !== playerId);
@@ -329,6 +333,78 @@ const handleCruiseMissile = (playerId, players) => {
     }
 };
 
+// Función para activar el Ataque EMP
+const handleEMPAttack = (playerId, players) => {
+    const player = players[playerId];
+    const opponentId = Object.keys(players).find(id => id !== playerId);
+    const opponent = players[opponentId];
+
+    // Verificar si el jugador tiene suficientes puntos
+    if (player.points < 25) {
+        player.socket.send(JSON.stringify({
+            type: 'emp_error',
+            message: 'No tienes suficientes puntos para usar el Ataque EMP.'
+        }));
+        return;
+    }
+
+    // Verificar si el EMP está en cooldown
+    if (EMPCooldown > 0) {
+        player.socket.send(JSON.stringify({
+            type: 'emp_error',
+            message: `El Ataque EMP está en recarga. Vuelve en ${EMPCooldown} turnos.`
+        }));
+        return;
+    }
+
+    // Usar el Ataque EMP
+    player.points -= 25;  // Restar los puntos al jugador
+    EMPActive = true;  // Activar el EMP
+    EMPTurnsLeft = 3;  // El EMP desactiva los poderes del oponente por 3 turnos
+
+    // Desactivar las funciones especiales del oponente
+    opponent.socket.send(JSON.stringify({
+        type: 'emp_activated',
+        message: 'Tus power-ups han sido desactivados durante 3 turnos.'
+    }));
+
+    player.socket.send(JSON.stringify({
+        type: 'emp_success',
+        message: 'Has activado el Ataque EMP. Los power-ups del oponente han sido desactivados durante 3 turnos.'
+    }));
+
+    // Enviar los puntos actualizados al jugador
+    player.socket.send(JSON.stringify({
+        type: 'update_points',
+        points: player.points
+    }));
+
+    // Empezar el cooldown del EMP
+    EMPCooldown = 10;
+};
+
+// Función para procesar los turnos y controlar el EMP
+const processTurn = () => {
+    if (EMPActive) {
+        EMPTurnsLeft -= 1;
+
+        // Si se acabaron los turnos del EMP, desactivar el efecto
+        if (EMPTurnsLeft <= 0) {
+            EMPActive = false;
+            const opponentId = Object.keys(players).find(id => id !== currentTurn);
+            players[opponentId].socket.send(JSON.stringify({
+                type: 'emp_deactivated',
+                message: 'Tus power-ups han sido activados nuevamente.'
+            }));
+        }
+    }
+
+    // Reducir el cooldown del EMP cada turno
+    if (EMPCooldown > 0) {
+        EMPCooldown -= 1;
+    }
+};
+
 
 module.exports = {
     handleSonarUse,
@@ -336,5 +412,7 @@ module.exports = {
     handlePlantMine,
     handleMineHit,
     handleDefensiveShield,
-    handleCruiseMissile
+    handleCruiseMissile,
+    handleEMPAttack,
+    processTurn
 };

@@ -1,9 +1,10 @@
 const WebSocket = require('ws');
 const { handleSonarUse } = require('./powerups');
-const { handleAttackPlanes } = require('./powerups');  // Asegúrate de importar la función correctamente
-const { handlePlantMine, handleMineHit } = require('./powerups');  // Asegúrate de importar las funciones necesarias
-const { handleDefensiveShield } = require('./powerups');  // Asegúrate de importar correctamente
-const { handleCruiseMissile } = require('./powerups');  // Asegúrate de importar la función
+const { handleAttackPlanes } = require('./powerups');  
+const { handlePlantMine, handleMineHit } = require('./powerups');
+const { handleDefensiveShield } = require('./powerups');
+const { handleCruiseMissile } = require('./powerups');  
+const { handleEMPAttack, processTurn } = require('./powerups'); 
 
 
 const PORT = 8080;
@@ -31,13 +32,13 @@ const createEmptyBoard = () => {
 const initializePlayer = (playerId, socket) => {
     players[playerId] = {
         socket,
-        board: createEmptyBoard(),
-        shipsRemaining: shipTypes.length,
+        board: Array(10).fill(null).map(() => Array(10).fill(0)),
+        points: 0,
         ready: false
     };
 
     if (!currentTurn) {
-        currentTurn = playerId; 
+        currentTurn = playerId;  // Empieza con el primer jugador
     }
 };
 
@@ -185,6 +186,11 @@ server.on('connection', (socket) => {
              handleMineHit(row, col, data.playerId, players);  // Llamada a la función de ataque a la mina
              }
             
+             if (data.type === 'use_emp' && data.playerId === currentTurn) {
+                handleEMPAttack(data.playerId, players);  // Activar el Ataque EMP
+            }
+
+            processTurn();
              
         } catch (error) {
             console.error("Error procesando el mensaje:", error);

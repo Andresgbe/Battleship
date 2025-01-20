@@ -93,6 +93,18 @@ function useMine() {
     }
 }
 
+function useEMP() {
+    if (myTurn && playerPoints >= 15) {
+        console.log("Activando Ataque EMP...");
+        // Enviar la solicitud al servidor
+        socket.send(JSON.stringify({
+            type: 'use_emp',
+            playerId: playerId
+        }));
+    } else {
+        alert("No tienes suficientes puntos o no es tu turno.");
+    }
+}
 
 socket.addEventListener('open', () => {
     console.log('Conectado al servidor WebSocket');
@@ -178,6 +190,24 @@ socket.addEventListener('message', (event) => {
             }
         });
     }
+
+
+    if (data.type === 'emp_success') {
+        alert(data.message);
+        document.getElementById('player-points').textContent = `Puntos: ${data.points}`;  // Actualizar los puntos
+    }
+
+    if (data.type === 'emp_error') {
+        alert(data.message);
+    }
+
+    if (data.type === 'emp_activated') {
+        alert(data.message); // Mostrar que los power-ups del oponente fueron desactivados
+    }
+
+    if (data.type === 'emp_deactivated') {
+        alert(data.message); // Mostrar que los power-ups del oponente han sido reactivados
+    }   
 
     // Manejo del escudo expirado
     if (data.type === 'shield_expired') {
