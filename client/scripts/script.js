@@ -83,7 +83,6 @@ function useDefensiveShield() {
     }
 }
 
-
 function useMine() {
     if (myTurn && playerPoints >= 5) {
         // Enviar al servidor para plantar la mina
@@ -282,7 +281,14 @@ function disableBoard() {
 }
 
 document.getElementById('confirm-setup').addEventListener('click', () => {
-    socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
+    // Verificar que todos los barcos estén colocados
+    if (placedShips.size === shipTypes.length) {
+        // Si todos los barcos han sido colocados, permitir continuar
+        socket.send(JSON.stringify({ type: 'setup_complete', playerId, board }));
+    } else {
+        // Si falta algún barco, mostrar un mensaje de advertencia
+        alert("¡Debes colocar todos los barcos antes de confirmar!");
+    }
 });
 
 document.getElementById('ship-select').addEventListener('change', (event) => {
@@ -344,7 +350,7 @@ function placeShip(event) {
                 board[row + i][col] = 1;
             }
         }
-        placedShips.add(selectedShip.name);
+        placedShips.add(selectedShip.name);  // Agregar el barco colocado al conjunto
         renderBoard();
     } else {
         console.log('No se puede colocar el barco aquí');
