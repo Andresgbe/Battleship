@@ -34,19 +34,50 @@
 
 /* Estilo para las posiciones de los tableros */
 .position {
-    width: 60px; /* Aumenta el tamaño de las casillas */
-    height: 60px; /* Aumenta el tamaño de las casillas */
-    background-color: #046c69;
+    width: 60px;
+    height: 60px;
     border: 1px solid black;
     text-align: center;
     color: white;
     font-weight: bold;
     cursor: pointer;
+    background-color: #046c69; /* Fondo para celdas vacías */
 }
 
+/* Elimina el fondo cuando hay un barco en la celda */
 .position.ship {
-    background-color: blue !important;
+    background-color: transparent; /* Aseguramos que no haya fondo azul cuando hay un barco */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
+
+/* Estilos para los barcos en el tablero */
+.board .ship.porta-aviones {
+    background: url("../images/porta-aviones.png") no-repeat center center;
+    background-size: contain;
+}
+
+.board .ship.acorazado {
+    background: url("../images/acorazado.png") no-repeat center center;
+    background-size: contain;
+}
+
+.board .ship.crucero {
+    background: url("../images/crucero.png") no-repeat center center;
+    background-size: contain;
+}
+
+.board .ship.submarino {
+    background: url("../images/submarino.png") no-repeat center center;
+    background-size: contain;
+}
+
+.board .ship.destructor {
+    background: url("../images/destructor.png") no-repeat center center;
+    background-size: contain;
+}
+
 
 /* Alinea los botones de control a la derecha */
 .buttons-right {
@@ -81,12 +112,26 @@
 }
 
 /* Estilo para el contenedor de controles debajo del primer tablero */
+.controls select {
+    width: 150px; /* Reducimos el ancho de los selectores */
+    margin-bottom: 10px; /* Reducimos el margen inferior para acercarlos */
+    padding: 8px; /* Añadimos un poco de padding para un aspecto más compacto */
+    font-size: 14px; /* Ajustamos el tamaño de la fuente */
+}
+
 .controls {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
     margin-top: 20px;
+    justify-content: center;
+}
+
+.controls button {
+    width: auto; /* Ajustamos el tamaño del botón */
+    padding: 10px 20px;
+    font-size: 14px;
 }
 
 /* Ajuste del título "Tu Tablero" */

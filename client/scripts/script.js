@@ -9,6 +9,7 @@ let shotsFired = new Set(); // Registra los disparos realizados para evitar repe
 let playerPoints = 0; // Declarar la variable de los puntos aquí, al inicio
 
 
+
 const shipTypes = [
     { name: "Portaaviones", size: 5 },
     { name: "Acorazado", size: 4 },
